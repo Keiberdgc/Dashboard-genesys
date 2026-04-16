@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Soporte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            min-height: 100vh;
+        }
+
+        .wrap {
+            padding: 12px 16px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        header h1 {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: .5px;
+        }
+
+        .reloj {
+            font-size: 16px;
+            font-weight: 700;
+            color: #58a6ff;
+        }
+
+        .act {
+            font-size: 11px;
+            color: #484f58;
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        /* GRID SUPERIOR */
+        .top-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: #161b22;
+            border: 1px solid #21262d;
+            border-radius: 10px;
+            padding: 12px 14px;
+        }
+
+        .card-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: #484f58;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .dot-voz {
+            background: #3fb950;
+        }
+
+        .dot-msg {
+            background: #a371f7;
+        }
+
+        .dot-gold {
+            background: #d29922;
+        }
+
+        /* STAT BOXES */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5px;
+        }
+
+        .stat-box {
+            background: #0d1117;
+            border-radius: 7px;
+            padding: 8px 5px;
+            text-align: center;
+            border: 1px solid #21262d;
+        }
+
+        .stat-num {
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .stat-num.red {
+            color: #f85149;
+        }
+
+        .stat-num.green {
+            color: #3fb950;
+        }
+
+        .stat-num.blue {
+            color: #58a6ff;
+        }
+
+        .stat-num.purple {
+            color: #a371f7;
+        }
+
+        .stat-lbl {
+            font-size: 9px;
+            color: #484f58;
+            margin-top: 3px;
+            line-height: 1.2;
+        }
+
+        .totales-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            margin-top: 8px;
+            border-top: 1px solid #21262d;
+            padding-top: 8px;
+        }
+
+        .tot-box {
+            background: #0d1117;
+            border-radius: 7px;
+            padding: 6px 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            border: 1px solid #21262d;
+        }
+
+        .tot-lbl {
+            font-size: 9px;
+            color: #484f58;
+        }
+
+        .tot-val {
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        /* DESTACADOS */
+        .dest-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .dest-card {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #21262d;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .dest-trophy {
+            position: absolute;
+            right: 8px;
+            top: 6px;
+            font-size: 20px;
+            opacity: .25;
+        }
+
+        .dest-tipo {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #484f58;
+            margin-bottom: 4px;
+        }
+
+        .dest-nombre {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dest-nombre.gold {
+            color: #d29922;
+        }
+
+        .dest-nombre.purple {
+            color: #a371f7;
+        }
+
+        .dest-stats {
+            display: flex;
+            gap: 5px;
+        }
+
+        .dest-stat {
+            flex: 1;
+            text-align: center;
+            background: #161b22;
+            border-radius: 5px;
+            padding: 4px 2px;
+            border: 1px solid #21262d;
+        }
+
+        .dest-stat-val {
+            font-size: 13px;
+            font-weight: 700;
+            color: #e6edf3;
+        }
+
+        .dest-stat-lbl {
+            font-size: 8px;
+            color: #484f58;
+            margin-top: 1px;
+            text-transform: uppercase;
+        }
+
+        /* TABS */
+        .tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #161b22;
+            border: 1px solid #21262d;
+            color: #484f58;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
+            background: #1f3d5c;
+            border-color: #388bfd;
+            color: #58a6ff;
+        }
+
+        /* TABLA */
+        .tabla-wrap {
+            background: #161b22;
+            border-radius: 10px;
+            border: 1px solid #21262d;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead tr {
+            background: #0d1117;
+        }
+
+        th {
+            padding: 8px 10px;
+            text-align: left;
+            color: #484f58;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .8px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #0d1117;
+            color: #c9d1d9;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background: #1c2128;
+        }
+
+        .rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+
+        .r1 {
+            background: #d29922;
+            color: #0d1117;
+        }
+
+        .r2 {
+            background: #8b949e;
+            color: #0d1117;
+        }
+
+        .r3 {
+            background: #7d4e1e;
+            color: #fff;
+        }
+
+        .rn {
+            background: #21262d;
+            color: #8b949e;
+        }
+
+        .pill {
+            display: inline-block;
+            padding: 2px 9px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .pill-voz {
+            background: #12261a;
+            color: #3fb950;
+            border: 1px solid #1a3d28;
+        }
+
+        .pill-msg {
+            background: #1e1535;
+            color: #a371f7;
+            border: 1px solid #2d1f55;
+        }
+
+        .num-total {
+            font-size: 14px;
+            font-weight: 700;
+            color: #e6edf3;
+        }
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: #0d1117;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            gap: 14px;
+        }
+
+        .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #21262d;
+            border-top-color: #58a6ff;
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #loading p {
+            color: #484f58;
+            font-size: 13px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="loading">
+        <div class="spinner"></div>
+        <p>Conectando con Genesys Cloud...</p>
+    </div>
+
+    <div class="wrap">
+        <header>
+            <h1>&#9679; Monitor de Agentes &mdash; Soporte</h1>
+            <div>
+                <div class="reloj" id="reloj">--:--:--</div>
+                <div class="act" id="ultima-act">Cargando...</div>
+            </div>
+        </header>
+
+        <!-- FILA SUPERIOR: 4 columnas -->
+        <div class="top-grid">
+
+            <!-- VOZ tiempo real + totales -->
+            <div class="card">
+                <div class="card-label"><span class="dot dot-voz"></span>Voz_Soporte &mdash; ahora</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-num red" id="voz-espera">0</div>
+                        <div class="stat-lbl">En espera</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num green" id="voz-atencion">0</div>
+                        <div class="stat-lbl">En atención</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num blue" id="voz-cola">0</div>
+                        <div class="stat-lbl">En cola</div>
+                    </div>
+                </div>
+                <div class="totales-row">
+                    <div class="tot-box"><span class="tot-lbl">Recibidas hoy</span><span class="tot-val"
+                            style="color:#3fb950" id="voz-ofrecidas">0</span></div>
+                    <div class="tot-box"><span class="tot-lbl">Abandonadas</span><span class="tot-val"
+                            style="color:#f85149" id="voz-abandonadas">0</span></div>
+                </div>
+            </div>
+
+            <!-- MSG tiempo real + totales -->
+            <div class="card">
+                <div class="card-label"><span class="dot dot-msg"></span>MSG_Soporte &mdash; ahora</div>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-num red" id="msg-espera">0</div>
+                        <div class="stat-lbl">En espera</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num purple" id="msg-atencion">0</div>
+                        <div class="stat-lbl">En atención</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num blue" id="msg-cola">0</div>
+                        <div class="stat-lbl">En cola</div>
+                    </div>
+                </div>
+                <div class="totales-row">
+                    <div class="tot-box" style="grid-column:1/-1"><span class="tot-lbl">Recibidos hoy</span><span
+                            class="tot-val" style="color:#a371f7" id="msg-ofrecidos">0</span></div>
+                </div>
+            </div>
+
+            <!-- Destacado VOZ -->
+            <div class="card">
+                <div class="card-label"><span class="dot dot-gold"></span>Agentes destacados del día</div>
+                <div class="dest-grid-2">
+                    <div class="dest-card">
+                        <div class="dest-trophy">&#128222;</div>
+                        <div class="dest-tipo">&#128293; Llamadas</div>
+                        <div class="dest-nombre gold" id="dest-voz-nombre">—</div>
+                        <div class="dest-stats">
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" style="color:#3fb950" id="dest-voz-total">0</div>
+                                <div class="dest-stat-lbl">Llamadas</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="dest-voz-tm">—</div>
+                                <div class="dest-stat-lbl">T.Manejo</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dest-card">
+                        <div class="dest-trophy">&#128172;</div>
+                        <div class="dest-tipo">&#129309; Mensajes</div>
+                        <div class="dest-nombre purple" id="dest-msg-nombre">—</div>
+                        <div class="dest-stats">
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" style="color:#a371f7" id="dest-msg-total">0</div>
+                                <div class="dest-stat-lbl">Mensajes</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="dest-msg-tm">—</div>
+                                <div class="dest-stat-lbl">T.Manejo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Semana destacados -->
+            <div class="card">
+                <div class="card-label"><span class="dot dot-gold"></span>Destacados de la semana</div>
+                <div class="dest-grid-2">
+                    <div class="dest-card">
+                        <div class="dest-trophy">&#128222;</div>
+                        <div class="dest-tipo">&#128293; Llamadas</div>
+                        <div class="dest-nombre gold" id="sem-dest-voz-nombre">—</div>
+                        <div class="dest-stats">
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" style="color:#3fb950" id="sem-dest-voz-total">0</div>
+                                <div class="dest-stat-lbl">Llamadas</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="sem-dest-voz-tm">—</div>
+                                <div class="dest-stat-lbl">T.Manejo</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dest-card">
+                        <div class="dest-trophy">&#128172;</div>
+                        <div class="dest-tipo">&#129309; Mensajes</div>
+                        <div class="dest-nombre purple" id="sem-dest-msg-nombre">—</div>
+                        <div class="dest-stats">
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" style="color:#a371f7" id="sem-dest-msg-total">0</div>
+                                <div class="dest-stat-lbl">Mensajes</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="sem-dest-msg-tm">—</div>
+                                <div class="dest-stat-lbl">T.Manejo</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="cambiarTab('todosHoy',this)">Todos &mdash; Hoy</button>
+            <button class="tab-btn" onclick="cambiarTab('top5VozHoy',this)">Top 5 Llamadas &mdash; Hoy</button>
+            <button class="tab-btn" onclick="cambiarTab('todosSem',this)">Todos &mdash; Semana</button>
+            <button class="tab-btn" onclick="cambiarTab('top5VozSem',this)">Top 5 Llamadas &mdash; Semana</button>
+            <button class="tab-btn" onclick="cambiarTab('top5MsgSem',this)">Top 5 Mensajes &mdash; Semana</button>
+        </div>
+
+        <!-- TABLA -->
+        <div class="tabla-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Agente</th>
+                        <th id="th-total">Total</th>
+                        <th>Llamadas</th>
+                        <th>Mensajes</th>
+                        <th>T. Manejo voz</th>
+                        <th>T. Manejo MSG</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-body">
+                    <tr>
+                        <td colspan="7" style="text-align:center;color:#484f58;padding:20px">Cargando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let tabActual = 'todosHoy';
+        let datos = null;
+
+        // Reloj
+        function actualizarReloj() {
+            document.getElementById('reloj').textContent =
+                new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+
+        async function cargarDatos() {
+            try {
+                const res = await fetch('/api/metrics');
+                const d = await res.json();
+                if (!d.ok) throw new Error(d.error);
+                datos = d;
+                console.log(datos)
+                // Tiempo real
+                document.getElementById('voz-espera').textContent = d.tiempoReal.voz.enEspera;
+                document.getElementById('voz-atencion').textContent = d.tiempoReal.voz.enAtencion;
+                document.getElementById('voz-cola').textContent = d.tiempoReal.voz.enCola;
+                document.getElementById('msg-espera').textContent = d.tiempoReal.msg.enEspera;
+                document.getElementById('msg-atencion').textContent = d.tiempoReal.msg.enAtencion;
+                document.getElementById('msg-cola').textContent = d.tiempoReal.msg.enCola;
+
+                // Totales hoy
+                document.getElementById('voz-ofrecidas').textContent = d.totalesHoy.voz.ofrecidas;
+                document.getElementById('voz-abandonadas').textContent = d.totalesHoy.voz.abandonadas;
+                document.getElementById('msg-ofrecidos').textContent = d.totalesHoy.msg.ofrecidas;
+
+                // Destacados del día
+                if (d.hoy.destacadoVoz) {
+                    document.getElementById('dest-voz-nombre').textContent = d.hoy.destacadoVoz.nombre;
+                    document.getElementById('dest-voz-total').textContent = d.hoy.destacadoVoz.vozManejadas;
+                    document.getElementById('dest-voz-tm').textContent = d.hoy.destacadoVoz.tManejoVoz;
+                }
+                if (d.hoy.destacadoMsg) {
+                    document.getElementById('dest-msg-nombre').textContent = d.hoy.destacadoMsg.nombre;
+                    document.getElementById('dest-msg-total').textContent = d.hoy.destacadoMsg.msgManejadas;
+                    document.getElementById('dest-msg-tm').textContent = d.hoy.destacadoMsg.tManejoMsg;
+                }
+
+                // Destacados de la semana
+                if (d.semana.destacadoVoz) {
+                    document.getElementById('sem-dest-voz-nombre').textContent = d.semana.destacadoVoz.nombre;
+                    document.getElementById('sem-dest-voz-total').textContent = d.semana.destacadoVoz.vozManejadas;
+                    document.getElementById('sem-dest-voz-tm').textContent = d.semana.destacadoVoz.tManejoVoz;
+                }
+                if (d.semana.destacadoMsg) {
+                    document.getElementById('sem-dest-msg-nombre').textContent = d.semana.destacadoMsg.nombre;
+                    document.getElementById('sem-dest-msg-total').textContent = d.semana.destacadoMsg.msgManejadas;
+                    document.getElementById('sem-dest-msg-tm').textContent = d.semana.destacadoMsg.tManejoMsg;
+                }
+
+                renderTabla();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('ultima-act').textContent =
+                    'Últ. actualización: ' + new Date(d.timestamp).toLocaleTimeString('es-VE');
+
+            } catch (err) {
+                console.error('Error:', err);
+            }
+        }
+
+        function renderTabla() {
+            if (!datos) return;
+
+            const tabMap = {
+                todosHoy: { lista: datos.hoy.todos, ordenPor: 'total' },
+                top5VozHoy: { lista: datos.hoy.top5Voz, ordenPor: 'voz' },
+                todosSem: { lista: datos.semana.todos, ordenPor: 'total' },
+                top5VozSem: { lista: datos.semana.top5Voz, ordenPor: 'voz' },
+                top5MsgSem: { lista: datos.semana.top5Msg, ordenPor: 'msg' }
+            };
+
+            const { lista, ordenPor } = tabMap[tabActual];
+
+            // Ajustar encabezado de columna Total según pestaña
+            const thTotal = document.getElementById('th-total');
+            if (ordenPor === 'voz') thTotal.textContent = 'Llamadas (rank)';
+            else if (ordenPor === 'msg') thTotal.textContent = 'Mensajes (rank)';
+            else thTotal.textContent = 'Total';
+
+            const badge = i => `<span class="rank ${i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn'}">${i + 1}</span>`;
+
+            document.getElementById('tabla-body').innerHTML = lista.map((a, i) => {
+                // Qué número va en la columna de rank según pestaña
+                const rankNum = ordenPor === 'voz' ? a.vozManejadas
+                    : ordenPor === 'msg' ? a.msgManejadas
+                        : a.total;
+                return `
+      <tr>
+        <td>${badge(i)}</td>
+        <td><strong>${a.nombre}</strong></td>
+        <td><span class="num-total">${rankNum}</span></td>
+        <td><span class="pill pill-voz">${a.vozManejadas}</span></td>
+        <td><span class="pill pill-msg">${a.msgManejadas}</span></td>
+        <td>${a.tManejoVoz}</td>
+        <td>${a.tManejoMsg}</td>
+      </tr>`;
+            }).join('');
+        }
+
+        function cambiarTab(tab, btn) {
+            tabActual = tab;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTabla();
+        }
+
+        cargarDatos();
+        setInterval(cargarDatos, 30000);
+    </script>
+</body>
+
+</html>
