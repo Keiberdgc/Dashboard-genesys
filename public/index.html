@@ -9,7 +9,7 @@
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
+            box-sizing: border-box
         }
 
         body {
@@ -17,11 +17,11 @@
             color: #e6edf3;
             font-family: 'Segoe UI', sans-serif;
             font-size: 14px;
-            min-height: 100vh;
+            min-height: 100vh
         }
 
         .wrap {
-            padding: 12px 16px;
+            padding: 12px 16px
         }
 
         header {
@@ -30,52 +30,51 @@
             align-items: center;
             margin-bottom: 12px;
             padding-bottom: 10px;
-            border-bottom: 1px solid #21262d;
+            border-bottom: 1px solid #21262d
         }
 
         header h1 {
             font-size: 15px;
             font-weight: 600;
-            letter-spacing: .5px;
+            letter-spacing: .5px
         }
 
         .reloj {
             font-size: 16px;
             font-weight: 700;
-            color: #58a6ff;
+            color: #58a6ff
         }
 
         .act {
             font-size: 11px;
             color: #484f58;
             margin-top: 2px;
-            text-align: right;
+            text-align: right
         }
 
-        /* GRID SUPERIOR */
         .top-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 10px
         }
 
         .card {
             background: #161b22;
             border: 1px solid #21262d;
             border-radius: 10px;
-            padding: 12px 14px;
+            padding: 12px 14px
         }
 
         .card-label {
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: 1.2px;
-            color: #484f58;
+            color: #6e7681;
             margin-bottom: 10px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 6px
         }
 
         .dot {
@@ -83,26 +82,25 @@
             height: 7px;
             border-radius: 50%;
             display: inline-block;
-            flex-shrink: 0;
+            flex-shrink: 0
         }
 
         .dot-voz {
-            background: #3fb950;
+            background: #3fb950
         }
 
         .dot-msg {
-            background: #a371f7;
+            background: #a371f7
         }
 
         .dot-gold {
-            background: #d29922;
+            background: #d29922
         }
 
-        /* STAT BOXES */
         .stat-grid {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            gap: 5px;
+            gap: 5px
         }
 
         .stat-box {
@@ -110,36 +108,36 @@
             border-radius: 7px;
             padding: 8px 5px;
             text-align: center;
-            border: 1px solid #21262d;
+            border: 1px solid #21262d
         }
 
         .stat-num {
             font-size: 24px;
             font-weight: 700;
-            line-height: 1;
+            line-height: 1
         }
 
-        .stat-num.red {
-            color: #f85149;
+        .red {
+            color: #f85149
         }
 
-        .stat-num.green {
-            color: #3fb950;
+        .green {
+            color: #3fb950
         }
 
-        .stat-num.blue {
-            color: #58a6ff;
+        .blue {
+            color: #58a6ff
         }
 
-        .stat-num.purple {
-            color: #a371f7;
+        .purple {
+            color: #a371f7
         }
 
         .stat-lbl {
             font-size: 9px;
-            color: #484f58;
+            color: #6e7681;
             margin-top: 3px;
-            line-height: 1.2;
+            line-height: 1.2
         }
 
         .totales-row {
@@ -148,7 +146,11 @@
             gap: 5px;
             margin-top: 8px;
             border-top: 1px solid #21262d;
-            padding-top: 8px;
+            padding-top: 8px
+        }
+
+        .tot-full {
+            grid-column: 1/-1
         }
 
         .tot-box {
@@ -158,24 +160,23 @@
             display: flex;
             flex-direction: column;
             gap: 2px;
-            border: 1px solid #21262d;
+            border: 1px solid #21262d
         }
 
         .tot-lbl {
             font-size: 9px;
-            color: #484f58;
+            color: #6e7681
         }
 
         .tot-val {
             font-size: 16px;
-            font-weight: 700;
+            font-weight: 700
         }
 
-        /* DESTACADOS */
         .dest-grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 8px
         }
 
         .dest-card {
@@ -184,45 +185,45 @@
             padding: 10px;
             border: 1px solid #21262d;
             position: relative;
-            overflow: hidden;
+            overflow: hidden
         }
 
-        .dest-trophy {
+        .dest-icon {
             position: absolute;
             right: 8px;
             top: 6px;
-            font-size: 20px;
-            opacity: .25;
+            font-size: 18px;
+            opacity: .25
         }
 
         .dest-tipo {
             font-size: 9px;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: #484f58;
-            margin-bottom: 4px;
+            color: #6e7681;
+            margin-bottom: 3px
         }
 
         .dest-nombre {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             margin-bottom: 6px;
             white-space: nowrap;
             overflow: hidden;
-            text-overflow: ellipsis;
+            text-overflow: ellipsis
         }
 
         .dest-nombre.gold {
-            color: #d29922;
+            color: #d29922
         }
 
         .dest-nombre.purple {
-            color: #a371f7;
+            color: #a371f7
         }
 
         .dest-stats {
             display: flex;
-            gap: 5px;
+            gap: 4px
         }
 
         .dest-stat {
@@ -231,89 +232,117 @@
             background: #161b22;
             border-radius: 5px;
             padding: 4px 2px;
-            border: 1px solid #21262d;
+            border: 1px solid #21262d
         }
 
         .dest-stat-val {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
-            color: #e6edf3;
+            color: #e6edf3
         }
 
         .dest-stat-lbl {
             font-size: 8px;
-            color: #484f58;
+            color: #6e7681;
             margin-top: 1px;
-            text-transform: uppercase;
+            text-transform: uppercase
         }
 
-        /* TABS */
+        /* ── TABS con colores vivos ── */
         .tabs {
             display: flex;
             gap: 6px;
             margin-bottom: 8px;
-            flex-wrap: wrap;
+            flex-wrap: wrap
         }
 
         .tab-btn {
-            background: #161b22;
-            border: 1px solid #21262d;
-            color: #484f58;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: all .15s;
             white-space: nowrap;
+            letter-spacing: .3px;
+            border: 1.5px solid transparent
+        }
+
+        .tab-todos-hoy {
+            background: #0f2318;
+            color: #56d364;
+            border-color: #1a4a2a
+        }
+
+        .tab-voz-hoy {
+            background: #0e1e3a;
+            color: #79c0ff;
+            border-color: #1a3a70
+        }
+
+        .tab-todos-sem {
+            background: #1a1130;
+            color: #d2a8ff;
+            border-color: #3d2580
+        }
+
+        .tab-voz-sem {
+            background: #0a1f2a;
+            color: #39d3f0;
+            border-color: #1a5060
+        }
+
+        .tab-msg-sem {
+            background: #2a0d35;
+            color: #f0a8ff;
+            border-color: #6a2090
         }
 
         .tab-btn.active {
-            background: #1f3d5c;
-            border-color: #388bfd;
-            color: #58a6ff;
+            filter: brightness(1.6);
+            box-shadow: 0 0 0 2px currentColor;
+            transform: translateY(-1px)
         }
 
-        /* TABLA */
         .tabla-wrap {
             background: #161b22;
             border-radius: 10px;
             border: 1px solid #21262d;
-            overflow: hidden;
+            overflow: hidden
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 12px;
+            font-size: 12px
         }
 
         thead tr {
-            background: #0d1117;
+            background: #0d1117
         }
 
         th {
             padding: 8px 10px;
             text-align: left;
-            color: #484f58;
+            color: #6e7681;
             font-size: 10px;
             text-transform: uppercase;
             letter-spacing: .8px;
-            font-weight: 600;
+            font-weight: 600
         }
 
         td {
             padding: 8px 10px;
             border-bottom: 1px solid #0d1117;
-            color: #c9d1d9;
+            color: #c9d1d9
         }
 
         tbody tr:last-child td {
-            border-bottom: none;
+            border-bottom: none
         }
 
         tbody tr:hover {
-            background: #1c2128;
+            background: #1c2128
         }
 
         .rank {
@@ -325,27 +354,27 @@
             border-radius: 50%;
             font-weight: 700;
             font-size: 11px;
-            margin-right: 4px;
+            margin-right: 4px
         }
 
         .r1 {
             background: #d29922;
-            color: #0d1117;
+            color: #0d1117
         }
 
         .r2 {
             background: #8b949e;
-            color: #0d1117;
+            color: #0d1117
         }
 
         .r3 {
             background: #7d4e1e;
-            color: #fff;
+            color: #fff
         }
 
         .rn {
             background: #21262d;
-            color: #8b949e;
+            color: #8b949e
         }
 
         .pill {
@@ -353,25 +382,31 @@
             padding: 2px 9px;
             border-radius: 10px;
             font-size: 11px;
-            font-weight: 700;
+            font-weight: 700
         }
 
-        .pill-voz {
+        .pv {
             background: #12261a;
             color: #3fb950;
-            border: 1px solid #1a3d28;
+            border: 1px solid #1a3d28
         }
 
-        .pill-msg {
+        .pm {
             background: #1e1535;
             color: #a371f7;
-            border: 1px solid #2d1f55;
+            border: 1px solid #2d1f55
         }
 
-        .num-total {
+        .pr {
+            background: #2d1010;
+            color: #f85149;
+            border: 1px solid #5a1e1e
+        }
+
+        .num-t {
             font-size: 14px;
             font-weight: 700;
-            color: #e6edf3;
+            color: #e6edf3
         }
 
         #loading {
@@ -383,7 +418,7 @@
             align-items: center;
             justify-content: center;
             z-index: 999;
-            gap: 14px;
+            gap: 14px
         }
 
         .spinner {
@@ -392,119 +427,124 @@
             border: 3px solid #21262d;
             border-top-color: #58a6ff;
             border-radius: 50%;
-            animation: spin .8s linear infinite;
+            animation: spin .8s linear infinite
         }
 
         @keyframes spin {
             to {
-                transform: rotate(360deg);
+                transform: rotate(360deg)
             }
         }
 
         #loading p {
             color: #484f58;
-            font-size: 13px;
+            font-size: 13px
         }
     </style>
 </head>
 
 <body>
-
     <div id="loading">
         <div class="spinner"></div>
         <p>Conectando con Genesys Cloud...</p>
     </div>
 
     <div class="wrap">
-        <header>
-            <h1>&#9679; Monitor de Agentes &mdash; Soporte</h1>
-            <div>
-                <div class="reloj" id="reloj">--:--:--</div>
-                <div class="act" id="ultima-act">Cargando...</div>
+        <header
+            style="flex-direction:column;align-items:center;padding-bottom:0;border-bottom:none;gap:0;margin-bottom:10px">
+            <div
+                style="position:relative;width:100%;max-width:1280px;height:120px;border-radius:10px;overflow:hidden;margin-bottom:8px">
+                <img src="cabecera_dashboard.png" alt="Thunder Net Soporte Técnico"
+                    style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;border-radius:10px;">
+                <div
+                    style="position:absolute;top:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;padding:0 16px;background:linear-gradient(to left,rgba(13,17,23,.85) 60%,transparent)">
+                    <div class="reloj" id="reloj">--:--:--</div>
+                    <div class="act" id="act">Cargando...</div>
+                </div>
             </div>
+            <div style="width:100%;border-bottom:1px solid #21262d"></div>
         </header>
 
-        <!-- FILA SUPERIOR: 4 columnas -->
         <div class="top-grid">
-
-            <!-- VOZ tiempo real + totales -->
             <div class="card">
                 <div class="card-label"><span class="dot dot-voz"></span>Voz_Soporte &mdash; ahora</div>
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div class="stat-num red" id="voz-espera">0</div>
+                        <div class="stat-num red" id="ve">0</div>
                         <div class="stat-lbl">En espera</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num green" id="voz-atencion">0</div>
+                        <div class="stat-num green" id="va">0</div>
                         <div class="stat-lbl">En atención</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num blue" id="voz-cola">0</div>
+                        <div class="stat-num blue" id="vc">0</div>
                         <div class="stat-lbl">En cola</div>
                     </div>
                 </div>
                 <div class="totales-row">
-                    <div class="tot-box"><span class="tot-lbl">Recibidas hoy</span><span class="tot-val"
-                            style="color:#3fb950" id="voz-ofrecidas">0</span></div>
-                    <div class="tot-box"><span class="tot-lbl">Abandonadas</span><span class="tot-val"
-                            style="color:#f85149" id="voz-abandonadas">0</span></div>
+                    <div class="tot-box"><span class="tot-lbl">Recibidas hoy</span><span class="tot-val green"
+                            id="vo">0</span></div>
+                    <div class="tot-box"><span class="tot-lbl">Perdidas</span><span class="tot-val red" id="vp">0</span>
+                    </div>
                 </div>
             </div>
 
-            <!-- MSG tiempo real + totales -->
             <div class="card">
                 <div class="card-label"><span class="dot dot-msg"></span>MSG_Soporte &mdash; ahora</div>
                 <div class="stat-grid">
                     <div class="stat-box">
-                        <div class="stat-num red" id="msg-espera">0</div>
+                        <div class="stat-num red" id="me">0</div>
                         <div class="stat-lbl">En espera</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num purple" id="msg-atencion">0</div>
+                        <div class="stat-num purple" id="ma">0</div>
                         <div class="stat-lbl">En atención</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-num blue" id="msg-cola">0</div>
+                        <div class="stat-num blue" id="mc">0</div>
                         <div class="stat-lbl">En cola</div>
                     </div>
                 </div>
                 <div class="totales-row">
-                    <div class="tot-box" style="grid-column:1/-1"><span class="tot-lbl">Recibidos hoy</span><span
-                            class="tot-val" style="color:#a371f7" id="msg-ofrecidos">0</span></div>
+                    <div class="tot-box tot-full"><span class="tot-lbl">Recibidos hoy</span><span class="tot-val purple"
+                            id="mo">0</span></div>
                 </div>
             </div>
 
-            <!-- Destacado VOZ -->
             <div class="card">
-                <div class="card-label"><span class="dot dot-gold"></span>Agentes destacados del día</div>
+                <div class="card-label"><span class="dot dot-gold"></span>Destacados del día</div>
                 <div class="dest-grid-2">
                     <div class="dest-card">
-                        <div class="dest-trophy">&#128222;</div>
-                        <div class="dest-tipo">&#128293; Llamadas</div>
-                        <div class="dest-nombre gold" id="dest-voz-nombre">—</div>
+                        <div class="dest-icon">&#128293;&#128222;</div>
+                        <div class="dest-tipo">Llamadas</div>
+                        <div class="dest-nombre gold" id="dvn">—</div>
                         <div class="dest-stats">
                             <div class="dest-stat">
-                                <div class="dest-stat-val" style="color:#3fb950" id="dest-voz-total">0</div>
-                                <div class="dest-stat-lbl">Llamadas</div>
+                                <div class="dest-stat-val green" id="dvt">0</div>
+                                <div class="dest-stat-lbl">Atendidas</div>
                             </div>
                             <div class="dest-stat">
-                                <div class="dest-stat-val" id="dest-voz-tm">—</div>
+                                <div class="dest-stat-val red" id="dvp">0</div>
+                                <div class="dest-stat-lbl">Perdidas</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="dvm">—</div>
                                 <div class="dest-stat-lbl">T.Manejo</div>
                             </div>
                         </div>
                     </div>
                     <div class="dest-card">
-                        <div class="dest-trophy">&#128172;</div>
-                        <div class="dest-tipo">&#129309; Mensajes</div>
-                        <div class="dest-nombre purple" id="dest-msg-nombre">—</div>
+                        <div class="dest-icon">&#128293;&#128172;</div>
+                        <div class="dest-tipo">Mensajes</div>
+                        <div class="dest-nombre purple" id="dmn">—</div>
                         <div class="dest-stats">
                             <div class="dest-stat">
-                                <div class="dest-stat-val" style="color:#a371f7" id="dest-msg-total">0</div>
-                                <div class="dest-stat-lbl">Mensajes</div>
+                                <div class="dest-stat-val purple" id="dmt">0</div>
+                                <div class="dest-stat-lbl">Atendidos</div>
                             </div>
                             <div class="dest-stat">
-                                <div class="dest-stat-val" id="dest-msg-tm">—</div>
+                                <div class="dest-stat-val" id="dmm">—</div>
                                 <div class="dest-stat-lbl">T.Manejo</div>
                             </div>
                         </div>
@@ -512,71 +552,77 @@
                 </div>
             </div>
 
-            <!-- Semana destacados -->
             <div class="card">
-                <div class="card-label"><span class="dot dot-gold"></span>Destacados de la semana</div>
+                <div class="card-label"><span class="dot dot-gold"></span>Destacados semana</div>
                 <div class="dest-grid-2">
                     <div class="dest-card">
-                        <div class="dest-trophy">&#128222;</div>
-                        <div class="dest-tipo">&#128293; Llamadas</div>
-                        <div class="dest-nombre gold" id="sem-dest-voz-nombre">—</div>
+                        <div class="dest-icon">&#128293;&#128222;</div>
+                        <div class="dest-tipo">Llamadas</div>
+                        <div class="dest-nombre gold" id="svn">—</div>
                         <div class="dest-stats">
                             <div class="dest-stat">
-                                <div class="dest-stat-val" style="color:#3fb950" id="sem-dest-voz-total">0</div>
-                                <div class="dest-stat-lbl">Llamadas</div>
+                                <div class="dest-stat-val green" id="svt">0</div>
+                                <div class="dest-stat-lbl">Atendidas</div>
                             </div>
                             <div class="dest-stat">
-                                <div class="dest-stat-val" id="sem-dest-voz-tm">—</div>
+                                <div class="dest-stat-val red" id="svp">0</div>
+                                <div class="dest-stat-lbl">Perdidas</div>
+                            </div>
+                            <div class="dest-stat">
+                                <div class="dest-stat-val" id="svm">—</div>
                                 <div class="dest-stat-lbl">T.Manejo</div>
                             </div>
                         </div>
                     </div>
                     <div class="dest-card">
-                        <div class="dest-trophy">&#128172;</div>
-                        <div class="dest-tipo">&#129309; Mensajes</div>
-                        <div class="dest-nombre purple" id="sem-dest-msg-nombre">—</div>
+                        <div class="dest-icon">&#128293;&#128172;</div>
+                        <div class="dest-tipo">Mensajes</div>
+                        <div class="dest-nombre purple" id="smn">—</div>
                         <div class="dest-stats">
                             <div class="dest-stat">
-                                <div class="dest-stat-val" style="color:#a371f7" id="sem-dest-msg-total">0</div>
-                                <div class="dest-stat-lbl">Mensajes</div>
+                                <div class="dest-stat-val purple" id="smt">0</div>
+                                <div class="dest-stat-lbl">Atendidos</div>
                             </div>
                             <div class="dest-stat">
-                                <div class="dest-stat-val" id="sem-dest-msg-tm">—</div>
+                                <div class="dest-stat-val" id="smm">—</div>
                                 <div class="dest-stat-lbl">T.Manejo</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- TABS -->
         <div class="tabs">
-            <button class="tab-btn active" onclick="cambiarTab('todosHoy',this)">Todos &mdash; Hoy</button>
-            <button class="tab-btn" onclick="cambiarTab('top5VozHoy',this)">Top 5 Llamadas &mdash; Hoy</button>
-            <button class="tab-btn" onclick="cambiarTab('todosSem',this)">Todos &mdash; Semana</button>
-            <button class="tab-btn" onclick="cambiarTab('top5VozSem',this)">Top 5 Llamadas &mdash; Semana</button>
-            <button class="tab-btn" onclick="cambiarTab('top5MsgSem',this)">Top 5 Mensajes &mdash; Semana</button>
+            <button class="tab-btn tab-todos-hoy active" onclick="cambiarTab('todosHoy',this)">&#128222;&#128172; Todos
+                &mdash; Hoy</button>
+            <button class="tab-btn tab-voz-hoy" onclick="cambiarTab('top5VozHoy',this)">&#128222; Top 5 Llamadas &mdash;
+                Hoy</button>
+            <button class="tab-btn tab-todos-sem" onclick="cambiarTab('todosSem',this)">&#128222;&#128172; Todos &mdash;
+                Semana</button>
+            <button class="tab-btn tab-voz-sem" onclick="cambiarTab('top5VozSem',this)">&#128222; Top 5 Llamadas &mdash;
+                Semana</button>
+            <button class="tab-btn tab-msg-sem" onclick="cambiarTab('top5MsgSem',this)">&#128172; Top 5 Mensajes &mdash;
+                Semana</button>
         </div>
 
-        <!-- TABLA -->
         <div class="tabla-wrap">
             <table>
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Agente</th>
-                        <th id="th-total">Total</th>
+                        <th id="th-rank">Total</th>
                         <th>Llamadas</th>
                         <th>Mensajes</th>
+                        <th>Perdidas</th>
                         <th>T. Manejo voz</th>
                         <th>T. Manejo MSG</th>
                     </tr>
                 </thead>
-                <tbody id="tabla-body">
+                <tbody id="tbody">
                     <tr>
-                        <td colspan="7" style="text-align:center;color:#484f58;padding:20px">Cargando...</td>
+                        <td colspan="8" style="text-align:center;color:#484f58;padding:20px">Cargando...</td>
                     </tr>
                 </tbody>
             </table>
@@ -584,119 +630,78 @@
     </div>
 
     <script>
-        let tabActual = 'todosHoy';
-        let datos = null;
+        let tab = 'todosHoy', datos = null;
 
-        // Reloj
-        function actualizarReloj() {
+        function reloj() {
             document.getElementById('reloj').textContent =
                 new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
-        setInterval(actualizarReloj, 1000);
-        actualizarReloj();
+        setInterval(reloj, 1000); reloj();
 
-        async function cargarDatos() {
+        function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+
+        async function cargar() {
             try {
-                const res = await fetch('/api/metrics');
-                const d = await res.json();
+                const d = await fetch('/api/metrics').then(r => r.json());
                 if (!d.ok) throw new Error(d.error);
                 datos = d;
-                console.log(datos)
-                // Tiempo real
-                document.getElementById('voz-espera').textContent = d.tiempoReal.voz.enEspera;
-                document.getElementById('voz-atencion').textContent = d.tiempoReal.voz.enAtencion;
-                document.getElementById('voz-cola').textContent = d.tiempoReal.voz.enCola;
-                document.getElementById('msg-espera').textContent = d.tiempoReal.msg.enEspera;
-                document.getElementById('msg-atencion').textContent = d.tiempoReal.msg.enAtencion;
-                document.getElementById('msg-cola').textContent = d.tiempoReal.msg.enCola;
 
-                // Totales hoy
-                document.getElementById('voz-ofrecidas').textContent = d.totalesHoy.voz.ofrecidas;
-                document.getElementById('voz-abandonadas').textContent = d.totalesHoy.voz.abandonadas;
-                document.getElementById('msg-ofrecidos').textContent = d.totalesHoy.msg.ofrecidas;
+                set('ve', d.tiempoReal.voz.enEspera); set('va', d.tiempoReal.voz.enAtencion);
+                set('vc', d.tiempoReal.voz.enCola); set('me', d.tiempoReal.msg.enEspera);
+                set('ma', d.tiempoReal.msg.enAtencion); set('mc', d.tiempoReal.msg.enCola);
+                set('vo', d.totalesHoy.voz.ofrecidas); set('vp', d.totalesHoy.voz.perdidas);
+                set('mo', d.totalesHoy.msg.ofrecidas);
 
-                // Destacados del día
-                if (d.hoy.destacadoVoz) {
-                    document.getElementById('dest-voz-nombre').textContent = d.hoy.destacadoVoz.nombre;
-                    document.getElementById('dest-voz-total').textContent = d.hoy.destacadoVoz.vozManejadas;
-                    document.getElementById('dest-voz-tm').textContent = d.hoy.destacadoVoz.tManejoVoz;
-                }
-                if (d.hoy.destacadoMsg) {
-                    document.getElementById('dest-msg-nombre').textContent = d.hoy.destacadoMsg.nombre;
-                    document.getElementById('dest-msg-total').textContent = d.hoy.destacadoMsg.msgManejadas;
-                    document.getElementById('dest-msg-tm').textContent = d.hoy.destacadoMsg.tManejoMsg;
-                }
+                const dv = d.hoy.destacadoVoz, dm = d.hoy.destacadoMsg;
+                const sv = d.semana.destacadoVoz, sm = d.semana.destacadoMsg;
 
-                // Destacados de la semana
-                if (d.semana.destacadoVoz) {
-                    document.getElementById('sem-dest-voz-nombre').textContent = d.semana.destacadoVoz.nombre;
-                    document.getElementById('sem-dest-voz-total').textContent = d.semana.destacadoVoz.vozManejadas;
-                    document.getElementById('sem-dest-voz-tm').textContent = d.semana.destacadoVoz.tManejoVoz;
-                }
-                if (d.semana.destacadoMsg) {
-                    document.getElementById('sem-dest-msg-nombre').textContent = d.semana.destacadoMsg.nombre;
-                    document.getElementById('sem-dest-msg-total').textContent = d.semana.destacadoMsg.msgManejadas;
-                    document.getElementById('sem-dest-msg-tm').textContent = d.semana.destacadoMsg.tManejoMsg;
-                }
+                if (dv) { set('dvn', dv.nombre); set('dvt', dv.vozManejadas); set('dvp', dv.vozPerdidas); set('dvm', dv.tManejoVoz); }
+                if (dm) { set('dmn', dm.nombre); set('dmt', dm.msgManejadas); set('dmm', dm.tManejoMsg); }
+                if (sv) { set('svn', sv.nombre); set('svt', sv.vozManejadas); set('svp', sv.vozPerdidas); set('svm', sv.tManejoVoz); }
+                if (sm) { set('smn', sm.nombre); set('smt', sm.msgManejadas); set('smm', sm.tManejoMsg); }
 
                 renderTabla();
                 document.getElementById('loading').style.display = 'none';
-                document.getElementById('ultima-act').textContent =
-                    'Últ. actualización: ' + new Date(d.timestamp).toLocaleTimeString('es-VE');
-
-            } catch (err) {
-                console.error('Error:', err);
-            }
+                set('act', 'Últ. actualización: ' + new Date(d.timestamp).toLocaleTimeString('es-VE'));
+            } catch (e) { console.error(e); }
         }
 
         function renderTabla() {
             if (!datos) return;
-
-            const tabMap = {
-                todosHoy: { lista: datos.hoy.todos, ordenPor: 'total' },
-                top5VozHoy: { lista: datos.hoy.top5Voz, ordenPor: 'voz' },
-                todosSem: { lista: datos.semana.todos, ordenPor: 'total' },
-                top5VozSem: { lista: datos.semana.top5Voz, ordenPor: 'voz' },
-                top5MsgSem: { lista: datos.semana.top5Msg, ordenPor: 'msg' }
+            const map = {
+                todosHoy: { lista: datos.hoy.todos, por: 'total' },
+                top5VozHoy: { lista: datos.hoy.top5Voz, por: 'voz' },
+                todosSem: { lista: datos.semana.todos, por: 'total' },
+                top5VozSem: { lista: datos.semana.top5Voz, por: 'voz' },
+                top5MsgSem: { lista: datos.semana.top5Msg, por: 'msg' }
             };
-
-            const { lista, ordenPor } = tabMap[tabActual];
-
-            // Ajustar encabezado de columna Total según pestaña
-            const thTotal = document.getElementById('th-total');
-            if (ordenPor === 'voz') thTotal.textContent = 'Llamadas (rank)';
-            else if (ordenPor === 'msg') thTotal.textContent = 'Mensajes (rank)';
-            else thTotal.textContent = 'Total';
+            const { lista, por } = map[tab];
+            document.getElementById('th-rank').textContent =
+                por === 'voz' ? 'Llamadas (rank)' : por === 'msg' ? 'Mensajes (rank)' : 'Total';
 
             const badge = i => `<span class="rank ${i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn'}">${i + 1}</span>`;
-
-            document.getElementById('tabla-body').innerHTML = lista.map((a, i) => {
-                // Qué número va en la columna de rank según pestaña
-                const rankNum = ordenPor === 'voz' ? a.vozManejadas
-                    : ordenPor === 'msg' ? a.msgManejadas
-                        : a.total;
-                return `
-      <tr>
-        <td>${badge(i)}</td>
-        <td><strong>${a.nombre}</strong></td>
-        <td><span class="num-total">${rankNum}</span></td>
-        <td><span class="pill pill-voz">${a.vozManejadas}</span></td>
-        <td><span class="pill pill-msg">${a.msgManejadas}</span></td>
-        <td>${a.tManejoVoz}</td>
-        <td>${a.tManejoMsg}</td>
-      </tr>`;
-            }).join('');
+            document.getElementById('tbody').innerHTML = lista.map((a, i) => `
+    <tr>
+      <td>${badge(i)}</td>
+      <td><strong>${a.nombre}</strong></td>
+      <td><span class="num-t">${por === 'voz' ? a.vozManejadas : por === 'msg' ? a.msgManejadas : a.total}</span></td>
+      <td><span class="pill pv">${a.vozManejadas}</span></td>
+      <td><span class="pill pm">${a.msgManejadas}</span></td>
+      <td><span class="pill pr">${a.vozPerdidas}</span></td>
+      <td>${a.tManejoVoz}</td>
+      <td>${a.tManejoMsg}</td>
+    </tr>`).join('');
         }
 
-        function cambiarTab(tab, btn) {
-            tabActual = tab;
+        function cambiarTab(t, btn) {
+            tab = t;
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderTabla();
         }
 
-        cargarDatos();
-        setInterval(cargarDatos, 30000);
+        cargar();
+        setInterval(cargar, 30000);
     </script>
 </body>
 

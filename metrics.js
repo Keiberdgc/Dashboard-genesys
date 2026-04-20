@@ -3,138 +3,118 @@ const axios = require('axios');
 const { getAccessToken } = require('./auth');
 
 const BASE_URL = 'https://api.mypurecloud.com/api/v2';
-
 const QUEUES = {
     voz: 'eb8858d2-0bad-4834-b550-b9f583a68f37',
     msg: 'ea4452d3-dc89-4cb8-b19d-f2dae5e6d8e5'
 };
-
-// Venezuela = UTC-4 siempre
-const TZ_OFFSET_HOURS = -4;
+const TZ_OFFSET_HOURS = -4; // Venezuela UTC-4
 
 function getIntervalHoy() {
     const now = new Date();
-    // Medianoche en hora Venezuela
-    const localMidnight = new Date(now);
-    localMidnight.setUTCHours(-TZ_OFFSET_HOURS, 0, 0, 0);
-    // Si ya pasamos esa medianoche hoy, bien. Si no, retrocedemos un día
-    if (localMidnight > now) {
-        localMidnight.setUTCDate(localMidnight.getUTCDate() - 1);
-    }
-    return `${localMidnight.toISOString()}/${now.toISOString()}`;
+    const midnight = new Date(now);
+    midnight.setUTCHours(-TZ_OFFSET_HOURS, 0, 0, 0);
+    if (midnight > now) midnight.setUTCDate(midnight.getUTCDate() - 1);
+    return `${midnight.toISOString()}/${now.toISOString()}`;
 }
 
 function getIntervalSemana() {
     const now = new Date();
     const localNow = new Date(now.getTime() + TZ_OFFSET_HOURS * 3600000);
-    const dayOfWeek = localNow.getUTCDay(); // 0=dom,1=lun...
-    const diffToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    const dow = localNow.getUTCDay();
+    const diff = dow === 0 ? 6 : dow - 1;
     const monday = new Date(localNow);
-    monday.setUTCDate(localNow.getUTCDate() - diffToMonday);
+    monday.setUTCDate(localNow.getUTCDate() - diff);
     monday.setUTCHours(0, 0, 0, 0);
-    // Convertir lunes local a UTC
     const mondayUTC = new Date(monday.getTime() - TZ_OFFSET_HOURS * 3600000);
     return `${mondayUTC.toISOString()}/${now.toISOString()}`;
 }
 
 // ─────────────────────────────────────────────
-// TIEMPO REAL — separado por cola y mediaType
+// TIEMPO REAL
+// FIX: result.data es array directo de métricas (no intervalos)
 // ─────────────────────────────────────────────
 async function getRealtimeObservations(token) {
     const body = {
         filter: {
             type: 'and',
-            clauses: [
-                {
-                    type: 'or',
-                    predicates: [
-                        { dimension: 'queueId', value: QUEUES.voz },
-                        { dimension: 'queueId', value: QUEUES.msg }
-                    ]
-                }
-            ]
+            clauses: [{
+                type: 'or',
+                predicates: [
+                    { dimension: 'queueId', value: QUEUES.voz },
+                    { dimension: 'queueId', value: QUEUES.msg }
+                ]
+            }]
         },
         metrics: ['oWaiting', 'oInteracting', 'oOnQueueUsers']
     };
-
-    const response = await axios.post(
-        `${BASE_URL}/analytics/queues/observations/query`,
-        body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-    );
-    return response.data;
+    const r = await axios.post(`${BASE_URL}/analytics/queues/observations/query`, body,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    return r.data;
 }
 
 // ─────────────────────────────────────────────
-// TOTALES DE COLA — inbound únicamente
+// TOTALES DE COLA — sin filtro de dirección
+// Así nOffered coincide exactamente con Genesys UI
 // ─────────────────────────────────────────────
 async function getQueueTotals(token, interval) {
     const body = {
         interval,
         groupBy: ['queueId', 'mediaType'],
         filter: {
-            type: 'and',
-            clauses: [
-                {
-                    type: 'or',
-                    predicates: [
-                        { dimension: 'queueId', value: QUEUES.voz },
-                        { dimension: 'queueId', value: QUEUES.msg }
-                    ]
-                },
-                {
-                    type: 'or',
-                    predicates: [
-                        { dimension: 'originatingDirection', value: 'inbound' }
-                    ]
-                }
+            type: 'or',
+            predicates: [
+                { dimension: 'queueId', value: QUEUES.voz },
+                { dimension: 'queueId', value: QUEUES.msg }
             ]
         },
-        metrics: ['nOffered', 'nConnected', 'tAbandon']
+        metrics: ['nOffered', 'tAbandon']
     };
-
-    const response = await axios.post(
-        `${BASE_URL}/analytics/conversations/aggregates/query`,
-        body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-    );
-    return response.data;
+    const r = await axios.post(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    return r.data;
 }
 
 // ─────────────────────────────────────────────
-// AGREGADOS POR AGENTE — inbound únicamente
+// AGREGADOS POR AGENTE — tAnswered.count = interacciones contestadas
+// tHandle solo inbound voz para tiempo promedio de voz
 // ─────────────────────────────────────────────
 async function getAgentAggregates(token, interval) {
     const body = {
         interval,
         groupBy: ['userId', 'queueId', 'mediaType'],
         filter: {
-            type: 'and',
-            clauses: [
-                {
-                    type: 'or',
-                    predicates: [
-                        { dimension: 'queueId', value: QUEUES.voz },
-                        { dimension: 'queueId', value: QUEUES.msg }
-                    ]
-                },
-                {
-                    type: 'or',
-                    predicates: [
-                        { dimension: 'originatingDirection', value: 'inbound' }
-                    ]
-                }
+            type: 'or',
+            predicates: [
+                { dimension: 'queueId', value: QUEUES.voz },
+                { dimension: 'queueId', value: QUEUES.msg }
             ]
         },
-        metrics: ['nConnected', 'tHandle', 'tAcw']
+        metrics: ['tAnswered', 'tHandle', 'tAcw']
     };
+    const r = await axios.post(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    return r.data;
+}
 
-    const response = await axios.post(
-        `${BASE_URL}/analytics/conversations/aggregates/query`,
-        body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } }
-    );
-    return response.data;
+// ─────────────────────────────────────────────
+// PERDIDAS POR AGENTE en voz (tAbandon.count por userId)
+// ─────────────────────────────────────────────
+async function getAgentAbandons(token, interval) {
+    const body = {
+        interval,
+        groupBy: ['userId', 'queueId'],
+        filter: {
+            type: 'and',
+            clauses: [
+                { type: 'or', predicates: [{ dimension: 'queueId', value: QUEUES.voz }] },
+                { type: 'or', predicates: [{ dimension: 'originatingDirection', value: 'inbound' }] }
+            ]
+        },
+        metrics: ['tAbandon']
+    };
+    const r = await axios.post(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    return r.data;
 }
 
 // ─────────────────────────────────────────────
@@ -142,38 +122,77 @@ async function getAgentAggregates(token, interval) {
 // ─────────────────────────────────────────────
 async function getAgentNames(token, userIds) {
     const ids = [...new Set(userIds)].filter(Boolean);
-    if (ids.length === 0) return {};
+    if (!ids.length) return {};
     const map = {};
-    await Promise.all(
-        ids.map(async (id) => {
-            try {
-                const r = await axios.get(
-                    `${BASE_URL}/users/${id}?fields=id,name`,
-                    { headers: { 'Authorization': `Bearer ${token}` } }
-                );
-                map[id] = r.data.name;
-            } catch {
-                map[id] = `Agente (${id.substring(0, 8)}...)`;
-            }
-        })
-    );
+    await Promise.all(ids.map(async id => {
+        try {
+            const r = await axios.get(`${BASE_URL}/users/${id}?fields=id,name`,
+                { headers: { 'Authorization': `Bearer ${token}` } });
+            map[id] = r.data.name;
+        } catch { map[id] = `Agente (${id.substring(0, 8)}...)`; }
+    }));
     return map;
 }
 
 // ─────────────────────────────────────────────
-// PROCESAR AGENTES
+// PROCESAR TIEMPO REAL
+// FIX: result.data es array de métricas directamente
 // ─────────────────────────────────────────────
-function processAgentAggregates(aggregates, agentNames) {
-    const agentMap = {};
+function processRealtime(data) {
+    const info = {
+        voz: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 },
+        msg: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 }
+    };
+    data.results?.forEach(result => {
+        const canal = result.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
+        // FIX CRÍTICO: result.data es array de métricas, no de intervalos
+        result.data?.forEach(m => {
+            const val = m.stats?.count || 0;
+            if (m.metric === 'oWaiting') info[canal].oWaiting += val;
+            if (m.metric === 'oInteracting') info[canal].oInteracting += val;
+            if (m.metric === 'oOnQueueUsers') info[canal].oOnQueueUsers += val;
+        });
+    });
+    return info;
+}
+
+// ─────────────────────────────────────────────
+// PROCESAR TOTALES DE COLA
+// ─────────────────────────────────────────────
+function processQueueTotals(data) {
+    const result = {
+        voz: { ofrecidas: 0, perdidas: 0 },
+        msg: { ofrecidas: 0 }
+    };
+    data.results?.forEach(r => {
+        const canal = r.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
+        r.data?.forEach(d => {
+            d.metrics?.forEach(m => {
+                if (m.metric === 'nOffered' && canal === 'voz') result.voz.ofrecidas += m.stats.count || 0;
+                if (m.metric === 'nOffered' && canal === 'msg') result.msg.ofrecidas += m.stats.count || 0;
+                if (m.metric === 'tAbandon' && canal === 'voz') result.voz.perdidas += m.stats.count || 0;
+            });
+        });
+    });
+    return result;
+}
+
+// ─────────────────────────────────────────────
+// PROCESAR AGENTES
+// tAnswered.count = interacciones contestadas (equivale a nAnswered de PowerBI)
+// tHandle solo cuenta para voz inbound (se filtra por mediaType en el procesamiento)
+// ─────────────────────────────────────────────
+function processAgentAggregates(aggregates, agentNames, abandonData) {
+    const map = {};
 
     aggregates.results?.forEach(result => {
         const { userId, queueId, mediaType } = result.group;
         if (!userId) return;
 
-        if (!agentMap[userId]) {
-            agentMap[userId] = {
+        if (!map[userId]) {
+            map[userId] = {
                 nombre: agentNames[userId] || `Agente (${userId.substring(0, 8)}...)`,
-                voz: { manejadas: 0, tHandle_ms: 0 },
+                voz: { manejadas: 0, tHandle_ms: 0, perdidas: 0 },
                 msg: { manejadas: 0, tHandle_ms: 0 },
                 total: 0
             };
@@ -183,80 +202,45 @@ function processAgentAggregates(aggregates, agentNames) {
 
         result.data?.forEach(d => {
             d.metrics?.forEach(m => {
-                if (m.metric === 'tHandle') {
-                    agentMap[userId][canal].manejadas += m.stats.count || 0;
-                    agentMap[userId][canal].tHandle_ms += m.stats.sum || 0;
+                // tAnswered.count = número de interacciones contestadas (igual que nAnswered)
+                if (m.metric === 'tAnswered') {
+                    map[userId][canal].manejadas += m.stats.count || 0;
+                }
+                // tHandle solo para voz — tiempo promedio únicamente inbound voz
+                if (m.metric === 'tHandle' && canal === 'voz') {
+                    map[userId].voz.tHandle_ms += m.stats.sum || 0;
+                }
+                // tHandle para msg
+                if (m.metric === 'tHandle' && canal === 'msg') {
+                    map[userId].msg.tHandle_ms += m.stats.sum || 0;
                 }
             });
         });
 
-        agentMap[userId].total =
-            agentMap[userId].voz.manejadas + agentMap[userId].msg.manejadas;
+        map[userId].total = map[userId].voz.manejadas + map[userId].msg.manejadas;
     });
 
-    return Object.values(agentMap);
-}
-
-// ─────────────────────────────────────────────
-// PROCESAR TOTALES DE COLA
-// ─────────────────────────────────────────────
-function processQueueTotals(data) {
-    const result = {
-        voz: { ofrecidas: 0, atendidas: 0, abandonadas: 0 },
-        msg: { ofrecidas: 0, atendidas: 0 }
-    };
-
-    data.results?.forEach(r => {
-        const canal = r.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
-        r.data?.forEach(d => {
+    // Inyectar perdidas por agente
+    abandonData?.results?.forEach(result => {
+        const { userId } = result.group;
+        if (!userId || !map[userId]) return;
+        result.data?.forEach(d => {
             d.metrics?.forEach(m => {
-                if (m.metric === 'nOffered') result[canal].ofrecidas += m.stats.count || 0;
-                if (m.metric === 'nConnected') result[canal].atendidas += m.stats.count || 0;
-                if (m.metric === 'tAbandon' && canal === 'voz')
-                    result.voz.abandonadas += m.stats.count || 0;
+                if (m.metric === 'tAbandon') map[userId].voz.perdidas += m.stats.count || 0;
             });
         });
     });
 
-    return result;
-}
-
-// ─────────────────────────────────────────────
-// PROCESAR TIEMPO REAL
-// ─────────────────────────────────────────────
-function processRealtime(data) {
-    const colaInfo = {
-        voz: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 },
-        msg: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 }
-    };
-
-    data.results?.forEach(result => {
-        const qId = result.group?.queueId;
-        if (!qId) return;
-        const canal = qId === QUEUES.voz ? 'voz' : 'msg';
-
-        result.data?.forEach(m => {
-            // d.metrics?.forEach(m => {
-            const val = m.stats?.count || 0;
-            if (m.metric === 'oWaiting') colaInfo[canal].oWaiting += val;
-            if (m.metric === 'oInteracting') colaInfo[canal].oInteracting += val;
-            if (m.metric === 'oOnQueueUsers') colaInfo[canal].oOnQueueUsers += val;
-            // });
-        });
-    });
-
-    return colaInfo;
+    return Object.values(map);
 }
 
 // ─────────────────────────────────────────────
 // UTILIDADES
 // ─────────────────────────────────────────────
 function msToMinSeg(ms) {
-    if (!ms || ms === 0) return '0m 0s';
-    const totalSeg = Math.floor(ms / 1000);
-    const min = Math.floor(totalSeg / 60);
-    const seg = totalSeg % 60;
-    return `${min}m ${seg}s`;
+    if (!ms) return '0m 0s';
+    const s = Math.floor(ms / 1000);
+    return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
 function formatearAgente(a) {
@@ -265,6 +249,7 @@ function formatearAgente(a) {
         total: a.total,
         vozManejadas: a.voz.manejadas,
         msgManejadas: a.msg.manejadas,
+        vozPerdidas: a.voz.perdidas || 0,
         tManejoVoz: msToMinSeg(a.voz.tHandle_ms / (a.voz.manejadas || 1)),
         tManejoMsg: msToMinSeg(a.msg.tHandle_ms / (a.msg.manejadas || 1))
     };
@@ -275,56 +260,50 @@ function formatearAgente(a) {
 // ─────────────────────────────────────────────
 async function getAllMetrics() {
     const token = await getAccessToken();
-    const intervalHoy = getIntervalHoy();
-    const intervalSemana = getIntervalSemana();
+    const hoy = getIntervalHoy();
+    const sem = getIntervalSemana();
 
-    const [realtime, totalesHoy, totalesSemana, agentesHoy, agentesSemana] = await Promise.all([
+    const [rt, totHoy, totSem, agHoy, agSem, abHoy, abSem] = await Promise.all([
         getRealtimeObservations(token),
-        getQueueTotals(token, intervalHoy),
-        getQueueTotals(token, intervalSemana),
-        getAgentAggregates(token, intervalHoy),
-        getAgentAggregates(token, intervalSemana)
+        getQueueTotals(token, hoy),
+        getQueueTotals(token, sem),
+        getAgentAggregates(token, hoy),
+        getAgentAggregates(token, sem),
+        getAgentAbandons(token, hoy),
+        getAgentAbandons(token, sem)
     ]);
 
-    const userIdsHoy = agentesHoy.results?.map(r => r.group?.userId).filter(Boolean) || [];
-    const userIdsSem = agentesSemana.results?.map(r => r.group?.userId).filter(Boolean) || [];
-    const todosIds = [...new Set([...userIdsHoy, ...userIdsSem])];
-    const agentNames = await getAgentNames(token, todosIds);
+    const uidsHoy = agHoy.results?.map(r => r.group?.userId).filter(Boolean) || [];
+    const uidsSem = agSem.results?.map(r => r.group?.userId).filter(Boolean) || [];
+    const names = await getAgentNames(token, [...new Set([...uidsHoy, ...uidsSem])]);
 
-    const listaHoy = processAgentAggregates(agentesHoy, agentNames);
-    const listaSem = processAgentAggregates(agentesSemana, agentNames);
+    const listaHoy = processAgentAggregates(agHoy, names, abHoy);
+    const listaSem = processAgentAggregates(agSem, names, abSem);
 
-    // Ordenamientos
-    const porTotal = arr => [...arr].sort((a, b) => b.total - a.total);
-    const porVoz = arr => [...arr].sort((a, b) => b.voz.manejadas - a.voz.manejadas);
-    const porMsg = arr => [...arr].sort((a, b) => b.msg.manejadas - a.msg.manejadas);
+    const porTotal = a => [...a].sort((x, y) => y.total - x.total);
+    const porVoz = a => [...a].sort((x, y) => y.voz.manejadas - x.voz.manejadas);
+    const porMsg = a => [...a].sort((x, y) => y.msg.manejadas - x.msg.manejadas);
 
-    const hoyTotal = porTotal(listaHoy);
-    const hoyVoz = porVoz(listaHoy);
-    const hoyMsg = porMsg(listaHoy);
-    const semTotal = porTotal(listaSem);
-    const semVoz = porVoz(listaSem);
-    const semMsg = porMsg(listaSem);
+    const hoyT = porTotal(listaHoy), hoyV = porVoz(listaHoy), hoyM = porMsg(listaHoy);
+    const semT = porTotal(listaSem), semV = porVoz(listaSem), semM = porMsg(listaSem);
 
     return {
-        tiempoReal: processRealtime(realtime),
-        totalesHoy: processQueueTotals(totalesHoy),
-        totalesSemana: processQueueTotals(totalesSemana),
+        tiempoReal: processRealtime(rt),
+        totalesHoy: processQueueTotals(totHoy),
+        totalesSemana: processQueueTotals(totSem),
         hoy: {
-            todos: hoyTotal.map(formatearAgente),
-            top5Total: hoyTotal.slice(0, 5).map(formatearAgente),
-            top5Voz: hoyVoz.slice(0, 5).map(formatearAgente),
-            top5Msg: hoyMsg.slice(0, 5).map(formatearAgente),
-            destacadoVoz: hoyVoz[0] ? formatearAgente(hoyVoz[0]) : null,
-            destacadoMsg: hoyMsg[0] ? formatearAgente(hoyMsg[0]) : null
+            todos: hoyT.map(formatearAgente),
+            top5Voz: hoyV.slice(0, 5).map(formatearAgente),
+            top5Msg: hoyM.slice(0, 5).map(formatearAgente),
+            destacadoVoz: hoyV[0] ? formatearAgente(hoyV[0]) : null,
+            destacadoMsg: hoyM[0] ? formatearAgente(hoyM[0]) : null
         },
         semana: {
-            todos: semTotal.map(formatearAgente),
-            top5Total: semTotal.slice(0, 5).map(formatearAgente),
-            top5Voz: semVoz.slice(0, 5).map(formatearAgente),
-            top5Msg: semMsg.slice(0, 5).map(formatearAgente),
-            destacadoVoz: semVoz[0] ? formatearAgente(semVoz[0]) : null,
-            destacadoMsg: semMsg[0] ? formatearAgente(semMsg[0]) : null
+            todos: semT.map(formatearAgente),
+            top5Voz: semV.slice(0, 5).map(formatearAgente),
+            top5Msg: semM.slice(0, 5).map(formatearAgente),
+            destacadoVoz: semV[0] ? formatearAgente(semV[0]) : null,
+            destacadoMsg: semM[0] ? formatearAgente(semM[0]) : null
         }
     };
 }
