@@ -248,7 +248,6 @@
             text-transform: uppercase
         }
 
-        /* ── TABS con colores vivos ── */
         .tabs {
             display: flex;
             gap: 6px;
@@ -278,6 +277,12 @@
             background: #0e1e3a;
             color: #79c0ff;
             border-color: #1a3a70
+        }
+
+        .tab-msg-hoy {
+            background: #1e0d35;
+            color: #c792f0;
+            border-color: #4a1a80
         }
 
         .tab-todos-sem {
@@ -444,6 +449,7 @@
 </head>
 
 <body>
+
     <div id="loading">
         <div class="spinner"></div>
         <p>Conectando con Genesys Cloud...</p>
@@ -466,6 +472,7 @@
         </header>
 
         <div class="top-grid">
+
             <div class="card">
                 <div class="card-label"><span class="dot dot-voz"></span>Voz_Soporte &mdash; ahora</div>
                 <div class="stat-grid">
@@ -530,7 +537,7 @@
                             </div>
                             <div class="dest-stat">
                                 <div class="dest-stat-val" id="dvm">—</div>
-                                <div class="dest-stat-lbl">T.Manejo</div>
+                                <div class="dest-stat-lbl">T.Habla</div>
                             </div>
                         </div>
                     </div>
@@ -545,7 +552,7 @@
                             </div>
                             <div class="dest-stat">
                                 <div class="dest-stat-val" id="dmm">—</div>
-                                <div class="dest-stat-lbl">T.Manejo</div>
+                                <div class="dest-stat-lbl">T.Chat</div>
                             </div>
                         </div>
                     </div>
@@ -570,7 +577,7 @@
                             </div>
                             <div class="dest-stat">
                                 <div class="dest-stat-val" id="svm">—</div>
-                                <div class="dest-stat-lbl">T.Manejo</div>
+                                <div class="dest-stat-lbl">T.Habla</div>
                             </div>
                         </div>
                     </div>
@@ -585,18 +592,21 @@
                             </div>
                             <div class="dest-stat">
                                 <div class="dest-stat-val" id="smm">—</div>
-                                <div class="dest-stat-lbl">T.Manejo</div>
+                                <div class="dest-stat-lbl">T.Chat</div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <div class="tabs">
             <button class="tab-btn tab-todos-hoy active" onclick="cambiarTab('todosHoy',this)">&#128222;&#128172; Todos
                 &mdash; Hoy</button>
             <button class="tab-btn tab-voz-hoy" onclick="cambiarTab('top5VozHoy',this)">&#128222; Top 5 Llamadas &mdash;
+                Hoy</button>
+            <button class="tab-btn tab-msg-hoy" onclick="cambiarTab('top5MsgHoy',this)">&#128172; Top 5 Mensajes &mdash;
                 Hoy</button>
             <button class="tab-btn tab-todos-sem" onclick="cambiarTab('todosSem',this)">&#128222;&#128172; Todos &mdash;
                 Semana</button>
@@ -616,8 +626,8 @@
                         <th>Llamadas</th>
                         <th>Mensajes</th>
                         <th>Perdidas</th>
-                        <th>T. Manejo voz</th>
-                        <th>T. Manejo MSG</th>
+                        <th id="th-tvoz">T. Habla voz</th>
+                        <th id="th-tmsg">T. Chat MSG</th>
                     </tr>
                 </thead>
                 <tbody id="tbody">
@@ -671,26 +681,33 @@
             const map = {
                 todosHoy: { lista: datos.hoy.todos, por: 'total' },
                 top5VozHoy: { lista: datos.hoy.top5Voz, por: 'voz' },
+                top5MsgHoy: { lista: datos.hoy.top5Msg, por: 'msg' },
                 todosSem: { lista: datos.semana.todos, por: 'total' },
                 top5VozSem: { lista: datos.semana.top5Voz, por: 'voz' },
                 top5MsgSem: { lista: datos.semana.top5Msg, por: 'msg' }
             };
             const { lista, por } = map[tab];
+
             document.getElementById('th-rank').textContent =
                 por === 'voz' ? 'Llamadas (rank)' : por === 'msg' ? 'Mensajes (rank)' : 'Total';
 
+            // Ajustar encabezados de tiempo según la pestaña activa
+            document.getElementById('th-tvoz').textContent = 'T. Habla voz';
+            document.getElementById('th-tmsg').textContent = por === 'msg' ? 'T. Chat (rank)' : 'T. Chat MSG';
+
             const badge = i => `<span class="rank ${i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rn'}">${i + 1}</span>`;
+
             document.getElementById('tbody').innerHTML = lista.map((a, i) => `
-    <tr>
-      <td>${badge(i)}</td>
-      <td><strong>${a.nombre}</strong></td>
-      <td><span class="num-t">${por === 'voz' ? a.vozManejadas : por === 'msg' ? a.msgManejadas : a.total}</span></td>
-      <td><span class="pill pv">${a.vozManejadas}</span></td>
-      <td><span class="pill pm">${a.msgManejadas}</span></td>
-      <td><span class="pill pr">${a.vozPerdidas}</span></td>
-      <td>${a.tManejoVoz}</td>
-      <td>${a.tManejoMsg}</td>
-    </tr>`).join('');
+            <tr>
+                <td>${badge(i)}</td>
+                <td><strong>${a.nombre}</strong></td>
+                <td><span class="num-t">${por === 'voz' ? a.vozManejadas : por === 'msg' ? a.msgManejadas : a.total}</span></td>
+                <td><span class="pill pv">${a.vozManejadas}</span></td>
+                <td><span class="pill pm">${a.msgManejadas}</span></td>
+                <td><span class="pill pr">${a.vozPerdidas}</span></td>
+                <td>${a.tManejoVoz}</td>
+                <td>${a.tManejoMsg}</td>
+            </tr>`).join('');
         }
 
         function cambiarTab(t, btn) {

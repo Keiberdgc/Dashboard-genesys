@@ -7,7 +7,7 @@ const QUEUES = {
     voz: 'eb8858d2-0bad-4834-b550-b9f583a68f37',
     msg: 'ea4452d3-dc89-4cb8-b19d-f2dae5e6d8e5'
 };
-const TZ_OFFSET_HOURS = -4; // Venezuela UTC-4
+const TZ_OFFSET_HOURS = -4;
 
 function getIntervalHoy() {
     const now = new Date();
@@ -29,10 +29,7 @@ function getIntervalSemana() {
     return `${mondayUTC.toISOString()}/${now.toISOString()}`;
 }
 
-// ─────────────────────────────────────────────
-// TIEMPO REAL
-// FIX: result.data es array directo de métricas (no intervalos)
-// ─────────────────────────────────────────────
+// TIEMPO REAL — FIX: result.data es array directo de métricas
 async function getRealtimeObservations(token) {
     const body = {
         filter: {
@@ -51,11 +48,7 @@ async function getRealtimeObservations(token) {
         { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
     return r.data;
 }
-
-// ─────────────────────────────────────────────
-// TOTALES DE COLA — sin filtro de dirección
-// Así nOffered coincide exactamente con Genesys UI
-// ─────────────────────────────────────────────
+// Función para obtener totales de la cola (ofrecidas y abandonadas)
 async function getQueueTotals(token, interval) {
     const body = {
         interval,
@@ -73,11 +66,7 @@ async function getQueueTotals(token, interval) {
         { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
     return r.data;
 }
-
-// ─────────────────────────────────────────────
-// AGREGADOS POR AGENTE — tAnswered.count = interacciones contestadas
-// tHandle solo inbound voz para tiempo promedio de voz
-// ─────────────────────────────────────────────
+// AGREGADOS POR AGENTE
 async function getAgentAggregates(token, interval) {
     const body = {
         interval,
@@ -89,16 +78,34 @@ async function getAgentAggregates(token, interval) {
                 { dimension: 'queueId', value: QUEUES.msg }
             ]
         },
-        metrics: ['tAnswered', 'tHandle', 'tAcw']
+        // Pide tHandle y tTalk por si acaso, para asegurar que siempre haya datos
+        metrics: ['tAnswered', 'tHandle']
+    };
+    const r = await axios.post(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
+        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
+    return r.data;
+}
+// AGREGADOS POR AGENTE — tTalk en lugar de tHandle para tiempo de conversación real
+async function getAgentAggregates(token, interval) {
+    const body = {
+        interval,
+        groupBy: ['userId', 'queueId', 'mediaType'],
+        filter: {
+            type: 'or',
+            predicates: [
+                { dimension: 'queueId', value: QUEUES.voz },
+                { dimension: 'queueId', value: QUEUES.msg }
+            ]
+        },
+        // Aquí pedimos TODO lo necesario en una sola consulta
+        metrics: ['tAnswered', 'tHandle', 'tTalk', 'tAcw']
     };
     const r = await axios.post(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
         { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
     return r.data;
 }
 
-// ─────────────────────────────────────────────
-// PERDIDAS POR AGENTE en voz (tAbandon.count por userId)
-// ─────────────────────────────────────────────
+// PERDIDAS POR AGENTE en voz
 async function getAgentAbandons(token, interval) {
     const body = {
         interval,
@@ -117,9 +124,7 @@ async function getAgentAbandons(token, interval) {
     return r.data;
 }
 
-// ─────────────────────────────────────────────
 // NOMBRES DE AGENTES
-// ─────────────────────────────────────────────
 async function getAgentNames(token, userIds) {
     const ids = [...new Set(userIds)].filter(Boolean);
     if (!ids.length) return {};
@@ -134,10 +139,7 @@ async function getAgentNames(token, userIds) {
     return map;
 }
 
-// ─────────────────────────────────────────────
-// PROCESAR TIEMPO REAL
-// FIX: result.data es array de métricas directamente
-// ─────────────────────────────────────────────
+// PROCESAR TIEMPO REAL — FIX crítico: result.data es array directo de métricas
 function processRealtime(data) {
     const info = {
         voz: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 },
@@ -145,7 +147,6 @@ function processRealtime(data) {
     };
     data.results?.forEach(result => {
         const canal = result.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
-        // FIX CRÍTICO: result.data es array de métricas, no de intervalos
         result.data?.forEach(m => {
             const val = m.stats?.count || 0;
             if (m.metric === 'oWaiting') info[canal].oWaiting += val;
@@ -156,9 +157,7 @@ function processRealtime(data) {
     return info;
 }
 
-// ─────────────────────────────────────────────
 // PROCESAR TOTALES DE COLA
-// ─────────────────────────────────────────────
 function processQueueTotals(data) {
     const result = {
         voz: { ofrecidas: 0, perdidas: 0 },
@@ -177,23 +176,19 @@ function processQueueTotals(data) {
     return result;
 }
 
-// ─────────────────────────────────────────────
-// PROCESAR AGENTES
-// tAnswered.count = interacciones contestadas (equivale a nAnswered de PowerBI)
-// tHandle solo cuenta para voz inbound (se filtra por mediaType en el procesamiento)
-// ─────────────────────────────────────────────
+// PROCESAR AGENTES — tTalk.sum/count para tiempo de conversación real
 function processAgentAggregates(aggregates, agentNames, abandonData) {
     const map = {};
 
     aggregates.results?.forEach(result => {
-        const { userId, queueId, mediaType } = result.group;
+        const { userId, queueId } = result.group;
         if (!userId) return;
 
         if (!map[userId]) {
             map[userId] = {
                 nombre: agentNames[userId] || `Agente (${userId.substring(0, 8)}...)`,
-                voz: { manejadas: 0, tHandle_ms: 0, perdidas: 0 },
-                msg: { manejadas: 0, tHandle_ms: 0 },
+                voz: { manejadas: 0, tHandle_sum: 0, tHandle_count: 0, perdidas: 0 },
+                msg: { manejadas: 0, tHandle_sum: 0, tHandle_count: 0 },
                 total: 0
             };
         }
@@ -202,17 +197,13 @@ function processAgentAggregates(aggregates, agentNames, abandonData) {
 
         result.data?.forEach(d => {
             d.metrics?.forEach(m => {
-                // tAnswered.count = número de interacciones contestadas (igual que nAnswered)
                 if (m.metric === 'tAnswered') {
                     map[userId][canal].manejadas += m.stats.count || 0;
                 }
-                // tHandle solo para voz — tiempo promedio únicamente inbound voz
-                if (m.metric === 'tHandle' && canal === 'voz') {
-                    map[userId].voz.tHandle_ms += m.stats.sum || 0;
-                }
-                // tHandle para msg
-                if (m.metric === 'tHandle' && canal === 'msg') {
-                    map[userId].msg.tHandle_ms += m.stats.sum || 0;
+                // Capturamos tanto la suma como el conteo de tHandle
+                if (m.metric === 'tHandle') {
+                    map[userId][canal].tHandle_sum += m.stats.sum || 0;
+                    map[userId][canal].tHandle_count += m.stats.count || 0;
                 }
             });
         });
@@ -234,9 +225,6 @@ function processAgentAggregates(aggregates, agentNames, abandonData) {
     return Object.values(map);
 }
 
-// ─────────────────────────────────────────────
-// UTILIDADES
-// ─────────────────────────────────────────────
 function msToMinSeg(ms) {
     if (!ms) return '0m 0s';
     const s = Math.floor(ms / 1000);
@@ -250,14 +238,12 @@ function formatearAgente(a) {
         vozManejadas: a.voz.manejadas,
         msgManejadas: a.msg.manejadas,
         vozPerdidas: a.voz.perdidas || 0,
-        tManejoVoz: msToMinSeg(a.voz.tHandle_ms / (a.voz.manejadas || 1)),
-        tManejoMsg: msToMinSeg(a.msg.tHandle_ms / (a.msg.manejadas || 1))
+        // Promedio real: suma de tHandle / conteo de tHandle
+        tManejoVoz: msToMinSeg(a.voz.tHandle_sum / (a.voz.tHandle_count || 1)),
+        tManejoMsg: msToMinSeg(a.msg.tHandle_sum / (a.msg.tHandle_count || 1))
     };
 }
 
-// ─────────────────────────────────────────────
-// FUNCIÓN PRINCIPAL
-// ─────────────────────────────────────────────
 async function getAllMetrics() {
     const token = await getAccessToken();
     const hoy = getIntervalHoy();
