@@ -4,7 +4,7 @@ const path = require('path');
 const { getAllMetrics } = require('./metrics');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3010;
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/api/metrics', async (req, res) => {
