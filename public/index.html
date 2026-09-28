@@ -642,6 +642,7 @@
     <script>
         let tab = 'todosHoy', datos = null;
 
+        // ── Reloj ──────────────────────────────────────────────
         function reloj() {
             document.getElementById('reloj').textContent =
                 new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -650,32 +651,50 @@
 
         function set(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
 
-        async function cargar() {
-            try {
-                const d = await fetch('/api/metrics').then(r => r.json());
-                if (!d.ok) throw new Error(d.error);
-                datos = d;
+        // ── Aplicar datos al DOM ────────────────────────────────
+        function aplicarDatos(d) {
+            datos = d;
 
-                set('ve', d.tiempoReal.voz.enEspera); set('va', d.tiempoReal.voz.enAtencion);
-                set('vc', d.tiempoReal.voz.enCola); set('me', d.tiempoReal.msg.enEspera);
-                set('ma', d.tiempoReal.msg.enAtencion); set('mc', d.tiempoReal.msg.enCola);
-                set('vo', d.totalesHoy.voz.ofrecidas); set('vp', d.totalesHoy.voz.perdidas);
-                set('mo', d.totalesHoy.msg.ofrecidas);
+            set('ve', d.tiempoReal.voz.enEspera); set('va', d.tiempoReal.voz.enAtencion);
+            set('vc', d.tiempoReal.voz.enCola); set('me', d.tiempoReal.msg.enEspera);
+            set('ma', d.tiempoReal.msg.enAtencion); set('mc', d.tiempoReal.msg.enCola);
+            set('vo', d.totalesHoy.voz.ofrecidas); set('vp', d.totalesHoy.voz.perdidas);
+            set('mo', d.totalesHoy.msg.ofrecidas);
 
-                const dv = d.hoy.destacadoVoz, dm = d.hoy.destacadoMsg;
-                const sv = d.semana.destacadoVoz, sm = d.semana.destacadoMsg;
+            const dv = d.hoy.destacadoVoz, dm = d.hoy.destacadoMsg;
+            const sv = d.semana.destacadoVoz, sm = d.semana.destacadoMsg;
 
-                if (dv) { set('dvn', dv.nombre); set('dvt', dv.vozManejadas); set('dvp', dv.vozPerdidas); set('dvm', dv.tManejoVoz); }
-                if (dm) { set('dmn', dm.nombre); set('dmt', dm.msgManejadas); set('dmm', dm.tManejoMsg); }
-                if (sv) { set('svn', sv.nombre); set('svt', sv.vozManejadas); set('svp', sv.vozPerdidas); set('svm', sv.tManejoVoz); }
-                if (sm) { set('smn', sm.nombre); set('smt', sm.msgManejadas); set('smm', sm.tManejoMsg); }
+            if (dv) { set('dvn', dv.nombre); set('dvt', dv.vozManejadas); set('dvp', dv.vozPerdidas); set('dvm', dv.tManejoVoz); }
+            if (dm) { set('dmn', dm.nombre); set('dmt', dm.msgManejadas); set('dmm', dm.tManejoMsg); }
+            if (sv) { set('svn', sv.nombre); set('svt', sv.vozManejadas); set('svp', sv.vozPerdidas); set('svm', sv.tManejoVoz); }
+            if (sm) { set('smn', sm.nombre); set('smt', sm.msgManejadas); set('smm', sm.tManejoMsg); }
 
-                renderTabla();
-                document.getElementById('loading').style.display = 'none';
-                set('act', 'Últ. actualización: ' + new Date(d.timestamp).toLocaleTimeString('es-VE'));
-            } catch (e) { console.error(e); }
+            renderTabla();
+            document.getElementById('loading').style.display = 'none';
+            set('act', 'Últ. actualización: ' + new Date(d.timestamp).toLocaleTimeString('es-VE'));
         }
 
+        // ── SSE — reemplaza el fetch/setInterval ────────────────
+        function conectarSSE() {
+            const sse = new EventSource('/api/stream');
+
+            sse.onmessage = (e) => {
+                try {
+                    const d = JSON.parse(e.data);
+                    if (d.ok) aplicarDatos(d);
+                } catch (err) { console.error('Error parseando SSE:', err); }
+            };
+
+            sse.onerror = () => {
+                console.warn('SSE desconectado, reconectando en 5s...');
+                sse.close();
+                setTimeout(conectarSSE, 5000); // reconexión automática
+            };
+        }
+
+        conectarSSE();
+
+        // ── Tabla ───────────────────────────────────────────────
         function renderTabla() {
             if (!datos) return;
             const map = {
@@ -690,8 +709,6 @@
 
             document.getElementById('th-rank').textContent =
                 por === 'voz' ? 'Llamadas (rank)' : por === 'msg' ? 'Mensajes (rank)' : 'Total';
-
-            // Ajustar encabezados de tiempo según la pestaña activa
             document.getElementById('th-tvoz').textContent = 'T. Habla voz';
             document.getElementById('th-tmsg').textContent = por === 'msg' ? 'T. Chat (rank)' : 'T. Chat MSG';
 
@@ -716,9 +733,6 @@
             btn.classList.add('active');
             renderTabla();
         }
-
-        cargar();
-        setInterval(cargar, 30000);
     </script>
     <script>
         window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
