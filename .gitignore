@@ -23,3 +23,6 @@ tsconfig.tsbuildinfo
 
 # Sistema
 .DS_Store
+
+# Índice de CodeGraph (generado)
+.codegraph/
