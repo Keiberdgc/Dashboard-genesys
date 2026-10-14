@@ -1,0 +1,25 @@
+# Dependencias
+node_modules/
+
+# Build de Next.js
+.next/
+out/
+next-env.d.ts
+
+# Variables de entorno (nunca commitear credenciales de Genesys)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Sistema
+.DS_Store

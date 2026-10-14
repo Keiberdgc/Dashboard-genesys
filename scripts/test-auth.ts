@@ -1,5 +1,10 @@
-// test-auth.js
-const { getAccessToken } = require('./auth');
+// scripts/test-auth.ts — verifica las credenciales de Genesys (test-auth.js original)
+// Uso: npm run test:auth
+import { cargarEnv } from './env';
+
+cargarEnv();
+
+const { getAccessToken } = await import('../lib/auth');
 
 async function main() {
     console.log('🔐 Intentando autenticar con Genesys Cloud...');

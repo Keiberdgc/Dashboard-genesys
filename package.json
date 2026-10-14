@@ -1,19 +1,33 @@
 {
   "name": "genesys-dashboard",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "version": "2.0.0",
+  "description": "Dashboard de métricas Genesys Cloud (Next.js App Router)",
+  "private": true,
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev -p 3010",
+    "build": "next build",
+    "start": "next start -p 3010",
+    "typecheck": "tsc --noEmit",
+    "test:auth": "tsx scripts/test-auth.ts",
+    "test:metrics": "tsx scripts/test-metrics.ts",
+    "check:data": "tsx scripts/check-data.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "axios": "^1.15.0",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.0"
   }
 }
