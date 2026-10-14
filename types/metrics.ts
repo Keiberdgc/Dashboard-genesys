@@ -43,6 +43,13 @@ export interface RankingAgents {
     destacadoMsg: Agente | null;
 }
 
+/** Totales + rankings de un periodo (hoy / semana) — trozo con refresco propio
+ *  (refresco escalonado: hoy cada 60s, semana cada 5min) */
+export interface PartePeriodo {
+    totales: Totales;
+    ranking: RankingAgents;
+}
+
 /** Retorno de getAllMetrics() — datos "en bruto" procesados */
 export interface MetricasBrutas {
     tiempoReal: { voz: ConteoCanal; msg: ConteoCanal };

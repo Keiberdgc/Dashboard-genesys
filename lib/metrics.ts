@@ -1,11 +1,14 @@
 // lib/metrics.ts — todas las consultas de analítica a Genesys + agregación
-// Port literal de metrics.js (sin dotenv: Next.js carga .env/.env.local solo).
+// Port de metrics.js (sin dotenv: Next.js carga .env/.env.local solo),
+// optimizado en consumo: caché de token OAuth, caché de nombres de agente
+// (lote), consultas fusionadas y partes con cadencia propia.
 // Mismas colas UUID, mismo TZ_OFFSET_HOURS, mismo shape de salida.
 import axios from 'axios';
 import { getAccessToken } from './auth';
 import type {
     GenesysResponse,
     MetricasBrutas,
+    PartePeriodo,
     RankingAgents,
     Totales
 } from '@/types/metrics';
@@ -76,9 +79,11 @@ async function getQueueTotals(token: string, interval: string): Promise<GenesysR
     return r.data;
 }
 
-// AGREGADOS POR AGENTE — tAnswered/tHandle/tTalk/tAcw en una sola consulta.
+// AGREGADOS POR AGENTE — tAnswered/tHandle/tAbandon en una sola consulta.
 // (En metrics.js originales había DOS definiciones de getAgentAggregates;
-//  gana la segunda — ésta — que es la que corre hoy en producción.)
+//  gana la segunda — ésta — que es la que corre hoy en producción.
+//  Las pérdidas por agente viajan aquí mismo: antes eran una consulta
+//  aparte por periodo, ahora se piden juntas — 2 llamadas menos cada ciclo.)
 async function getAgentAggregates(token: string, interval: string): Promise<GenesysResponse> {
     const body = {
         interval,
@@ -91,42 +96,74 @@ async function getAgentAggregates(token: string, interval: string): Promise<Gene
             ]
         },
         // Aquí pedimos TODO lo necesario en una sola consulta
-        metrics: ['tAnswered', 'tHandle', 'tTalk', 'tAcw']
+        // (tTalk/tAcw se pedían y no se usaban en ningún lado → fuera)
+        metrics: ['tAnswered', 'tHandle', 'tAbandon']
     };
     const r = await axios.post<GenesysResponse>(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
         { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
     return r.data;
 }
 
-// PERDIDAS POR AGENTE en voz
-async function getAgentAbandons(token: string, interval: string): Promise<GenesysResponse> {
-    const body = {
-        interval,
-        groupBy: ['userId', 'queueId'],
-        filter: {
-            type: 'and',
-            clauses: [
-                { type: 'or', predicates: [{ dimension: 'queueId', value: QUEUES.voz }] },
-                { type: 'or', predicates: [{ dimension: 'originatingDirection', value: 'inbound' }] }
-            ]
-        },
-        metrics: ['tAbandon']
-    };
-    const r = await axios.post<GenesysResponse>(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
-    return r.data;
+// ── CACHÉ DE NOMBRES DE AGENTES ──────────────────────────────
+// Los nombres casi nunca cambian, pero antes se hacía un GET /users/{id}
+// POR AGENTE en cada ciclo de 30s (era el ~88% de las peticiones a
+// Genesys). Ahora se guardan 24h en globalThis (sobrevive al HMR de dev)
+// y los faltantes se resuelven con UNA consulta en lote por cada 50 ids.
+const TTL_NOMBRES_MS = 24 * 60 * 60 * 1000;
+const TAM_LOTE_IDS = 50;
+
+interface CacheNombres {
+    nombres: Map<string, { nombre: string; ts: number }>;
 }
 
-// NOMBRES DE AGENTES
+const globalNombres = globalThis as unknown as { __nombresAgentes?: CacheNombres };
+const cacheNombres: CacheNombres = (globalNombres.__nombresAgentes ??= { nombres: new Map() });
+
+// NOMBRES DE AGENTES — caché + batch (fallback al GET individual de siempre)
 async function getAgentNames(token: string, userIds: (string | undefined)[]): Promise<Record<string, string>> {
     const ids = [...new Set(userIds)].filter(Boolean) as string[];
     if (!ids.length) return {};
+
+    const ahora = Date.now();
     const map: Record<string, string> = {};
-    await Promise.all(ids.map(async id => {
+    const faltan: string[] = [];
+    for (const id of ids) {
+        const guardado = cacheNombres.nombres.get(id);
+        if (guardado && ahora - guardado.ts < TTL_NOMBRES_MS) map[id] = guardado.nombre;
+        else faltan.push(id);
+    }
+    if (!faltan.length) return map;
+
+    const guardar = (id: string, nombre: string) => {
+        map[id] = nombre;
+        cacheNombres.nombres.set(id, { nombre, ts: Date.now() });
+    };
+
+    // 1) Lote: GET /users?ids=a,b,c&fields=id,name (un puñado de ids por llamada)
+    const sinResolver = new Set(faltan);
+    for (let i = 0; i < faltan.length; i += TAM_LOTE_IDS) {
+        const lote = faltan.slice(i, i + TAM_LOTE_IDS);
+        try {
+            const r = await axios.get<{ entities?: { id?: string; name?: string }[] }>(`${BASE_URL}/users`, {
+                params: { ids: lote.join(','), fields: 'id,name', pageSize: lote.length },
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            for (const u of r.data.entities || []) {
+                if (u.id && u.name) {
+                    guardar(u.id, u.name);
+                    sinResolver.delete(u.id);
+                }
+            }
+        } catch { /* sigue el fallback individual de abajo */ }
+    }
+
+    // 2) Fallback: los que el lote no devolvió → GET individual (sin caché
+    //    del nombre de fallback, para reintentar en el próximo ciclo)
+    await Promise.all([...sinResolver].map(async id => {
         try {
             const r = await axios.get<{ name: string }>(`${BASE_URL}/users/${id}?fields=id,name`,
                 { headers: { 'Authorization': `Bearer ${token}` } });
-            map[id] = r.data.name;
+            guardar(id, r.data.name);
         } catch { map[id] = `Agente (${id.substring(0, 8)}...)`; }
     }));
     return map;
@@ -178,10 +215,11 @@ interface AgenteInterno {
 }
 
 // PROCESAR AGENTES — tHandle.sum/count para tiempo de manejo promedio
+// (tAbandon viene fusionado en la misma consulta: solo se cuenta el de la
+//  cola de voz, igual que la consulta de pérdidas anterior — voz + inbound)
 function processAgentAggregates(
     aggregates: GenesysResponse,
-    agentNames: Record<string, string>,
-    abandonData: GenesysResponse | undefined
+    agentNames: Record<string, string>
 ): AgenteInterno[] {
     const map: Record<string, AgenteInterno> = {};
 
@@ -211,21 +249,15 @@ function processAgentAggregates(
                     map[userId][canal].tHandle_sum += m.stats?.sum || 0;
                     map[userId][canal].tHandle_count += m.stats?.count || 0;
                 }
+                // Pérdidas fusionadas: solo la cola de voz (antes: consulta
+                // aparte filtrada por voz + inbound)
+                if (m.metric === 'tAbandon' && canal === 'voz') {
+                    map[userId].voz.perdidas += m.stats?.count || 0;
+                }
             });
         });
 
         map[userId].total = map[userId].voz.manejadas + map[userId].msg.manejadas;
-    });
-
-    // Inyectar perdidas por agente
-    abandonData?.results?.forEach(result => {
-        const userId = result.group?.userId;
-        if (!userId || !map[userId]) return;
-        result.data?.forEach(d => {
-            d.metrics?.forEach(m => {
-                if (m.metric === 'tAbandon') map[userId].voz.perdidas += m.stats?.count || 0;
-            });
-        });
     });
 
     return Object.values(map);
@@ -250,34 +282,36 @@ function formatearAgente(a: AgenteInterno) {
     };
 }
 
-export async function getAllMetrics(): Promise<MetricasBrutas> {
-    const token = await getAccessToken();
-    const hoy = getIntervalHoy();
-    const sem = getIntervalSemana();
+// ── PARTES INDEPENDIENTES (refresco escalonado) ──────────────
+// Cada parte se consulta con su propia cadencia desde lib/cache.ts:
+// tiempoReal 30s, hoy 60s, semana 5min. Todas comparten el token (caché).
 
-    const [rt, totHoy, totSem, agHoy, agSem, abHoy, abSem] = await Promise.all([
-        getRealtimeObservations(token),
-        getQueueTotals(token, hoy),
-        getQueueTotals(token, sem),
-        getAgentAggregates(token, hoy),
-        getAgentAggregates(token, sem),
-        getAgentAbandons(token, hoy),
-        getAgentAbandons(token, sem)
+/** Tiempo real de las colas (en espera / en atención / en cola) */
+export async function getParteTiempoReal(): Promise<MetricasBrutas['tiempoReal']> {
+    const token = await getAccessToken();
+    const rt = await getRealtimeObservations(token);
+    return processRealtime(rt);
+}
+
+/** Totales de cola + ranking de agentes de un periodo ('hoy' | 'semana') */
+export async function getPartePeriodo(periodo: 'hoy' | 'semana'): Promise<PartePeriodo> {
+    const token = await getAccessToken();
+    const interval = periodo === 'hoy' ? getIntervalHoy() : getIntervalSemana();
+
+    const [tot, ag] = await Promise.all([
+        getQueueTotals(token, interval),
+        getAgentAggregates(token, interval)
     ]);
 
-    const uidsHoy = agHoy.results?.map(r => r.group?.userId).filter(Boolean) || [];
-    const uidsSem = agSem.results?.map(r => r.group?.userId).filter(Boolean) || [];
-    const names = await getAgentNames(token, [...new Set([...uidsHoy, ...uidsSem])]);
-
-    const listaHoy = processAgentAggregates(agHoy, names, abHoy);
-    const listaSem = processAgentAggregates(agSem, names, abSem);
+    const uids = ag.results?.map(r => r.group?.userId).filter(Boolean) || [];
+    const names = await getAgentNames(token, uids);
+    const lista = processAgentAggregates(ag, names);
 
     const porTotal = (a: AgenteInterno[]) => [...a].sort((x, y) => y.total - x.total);
     const porVoz = (a: AgenteInterno[]) => [...a].sort((x, y) => y.voz.manejadas - x.voz.manejadas);
     const porMsg = (a: AgenteInterno[]) => [...a].sort((x, y) => y.msg.manejadas - x.msg.manejadas);
 
-    const hoyT = porTotal(listaHoy), hoyV = porVoz(listaHoy), hoyM = porMsg(listaHoy);
-    const semT = porTotal(listaSem), semV = porVoz(listaSem), semM = porMsg(listaSem);
+    const listaT = porTotal(lista), listaV = porVoz(lista), listaM = porMsg(lista);
 
     const armarRanking = (todos: AgenteInterno[], voz: AgenteInterno[], msg: AgenteInterno[]): RankingAgents => ({
         todos: todos.map(formatearAgente),
@@ -288,10 +322,25 @@ export async function getAllMetrics(): Promise<MetricasBrutas> {
     });
 
     return {
-        tiempoReal: processRealtime(rt),
-        totalesHoy: processQueueTotals(totHoy),
-        totalesSemana: processQueueTotals(totSem),
-        hoy: armarRanking(hoyT, hoyV, hoyM),
-        semana: armarRanking(semT, semV, semM)
+        totales: processQueueTotals(tot),
+        ranking: armarRanking(listaT, listaV, listaM)
+    };
+}
+
+// Todas las partes de una vez — la usan los scripts CLI
+// (`npm run check:data` / `test:metrics`) como antes.
+export async function getAllMetrics(): Promise<MetricasBrutas> {
+    const [tiempoReal, hoy, semana] = await Promise.all([
+        getParteTiempoReal(),
+        getPartePeriodo('hoy'),
+        getPartePeriodo('semana')
+    ]);
+
+    return {
+        tiempoReal,
+        totalesHoy: hoy.totales,
+        totalesSemana: semana.totales,
+        hoy: hoy.ranking,
+        semana: semana.ranking
     };
 }
