@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Next.js 16 (App Router + TypeScript) dashboard for Genesys Cloud metrics. Migrated from the original Express + SSE app — endpoints, payload shape, port, behavior, and visuals are unchanged.
+Next.js 16 (App Router + TypeScript) dashboard for Genesys Cloud metrics. Migrated from the original Express + SSE app — endpoints, payload shape, port and behavior are unchanged; the UI was later re-skinned on a shadcn/ui + Tailwind design system that reproduces the original dark palette.
 
 ## Commands
 
@@ -22,13 +22,21 @@ Next.js 16 (App Router + TypeScript) dashboard for Genesys Cloud metrics. Migrat
 ## Architecture
 
 - `app/api/stream/route.ts` — SSE endpoint (Web `ReadableStream`): sends the cached payload immediately to new clients, registers them, pings every 20s, cleans up on abort. Segment config: `dynamic = 'force-dynamic'`, `runtime = 'nodejs'`, `maxDuration = 300`.
-- `lib/cache.ts` — in-process cache + SSE client registry on `globalThis` (survives dev HMR; one cache per instance on serverless). Refresh loop every 30s that pushes JSON to all connected clients (so many viewers = one Genesys query per Node process). `construirPayload()` produces the exact payload shape the UI consumes.
+- `lib/cache.ts` — in-process cache + SSE client registry on `globalThis` (survives dev HMR; one cache per instance on serverless). **Tiered refresh loop**: a single 30s tick refreshes realtime every 30s, "hoy" totals/rankings every 60s, and "semana" every 5min (`INTERVALO_*_MS`). It pushes JSON to all connected clients **only when the payload actually changed** (`hashEmitido`; the 20s SSE ping keeps connections alive) and **stops itself after 5min with zero clients** (`INACTIVIDAD_APAGADO_MS`), resuming on the next connect. `construirPayload()` produces the exact payload shape the UI consumes; parts are composed by `componerMetricas()`.
 - `instrumentation.ts` — starts the refresh loop once when the server boots (the equivalent of the old module-scope `setInterval` in `server.js`); `app/api/metrics/route.ts` also ensures the loop as a serverless safety net.
-- `lib/metrics.ts` — all Genesys analytics queries + aggregation into the payload shape. Queue UUIDs and `TZ_OFFSET_HOURS = -4` are hardcoded here; day/week interval math depends on that offset. **Note:** the original `metrics.js` defined `getAgentAggregates` twice (second silently won); the port keeps only that second definition.
-- `lib/auth.ts` — OAuth client-credentials token. A fresh token is fetched on every refresh cycle (no caching).
-- `app/page.tsx` — the whole dashboard as one client component (EventSource with the original manual 5s reconnect, clock, tabs, table). `app/globals.css` holds the original CSS verbatim; `types/metrics.ts` is shared by API and frontend.
+- `lib/metrics.ts` — all Genesys analytics queries + aggregation into the payload shape. Queue UUIDs and `TZ_OFFSET_HOURS = -4` are hardcoded here; day/week interval math depends on that offset. Exposes `getParteTiempoReal()` / `getPartePeriodo('hoy'|'semana')` for the tiered loop and `getAllMetrics()` (composition of the three) for the CLI scripts. **Note:** the original `metrics.js` defined `getAgentAggregates` twice (second silently won); the port keeps only that second definition. Agent **names are cached 24h** on `globalThis` and fetched in batch (`GET /users?ids=...`, 50 per call, individual GET as fallback); per-agent abandons were folded into `getAgentAggregates` (`tAbandon`, voz queue only — verified identical vs. the old separate query) and the unused `tTalk`/`tAcw` metrics were dropped.
+- `lib/auth.ts` — OAuth client-credentials token, **cached on `globalThis`** until ~60s before `expires_in` (one token fetch per expiry instead of one per refresh cycle).
+- `app/page.tsx` — thin client orchestrator (~80 lines): `useMetricas()` (EventSource with the original manual 5s reconnect), `useReloj()`, active tab, and assembly of the pieces below. `types/metrics.ts` is shared by API and frontend.
+- Design system (shadcn/ui + Tailwind v4):
+  - `app/globals.css` — `@import 'tailwindcss'` + `@theme inline` mapping tokens to utilities. Semantic tokens (`--background`, `--card`, `--border`…) hold the GitHub-dark palette in `.dark`, plus **channel colors** `--voz` (verde), `--msg` (morado), `--cielo` (azul), `--oro`, `--peligro` exposed as `text-voz` / `bg-msg/15` / `border-oro/40`. The theme is **always dark**: `<html>` carries a fixed `dark` class (no `next-themes`).
+  - `components/ui/` — shadcn primitives (`card`, `tabs`, `table`, `badge`, `separator`, `skeleton`, `spinner`), Base UI based. `badge.tsx` and `tabs.tsx` gained a `tono` (channel color) variant — edit cva variants there, never hardcode colors at the call site.
+  - `components/dashboard/` — domain components: `dashboard-header`, `realtime-card`, `destacados-card`, `destacado-item`, `stat-box`, `tabs-nav`, `ranking-table`, `loading-screen`.
+  - `config/tabs.ts` — single source of truth for the 6 views (canal, periodo, tono, icono, etiqueta); `listaTab()` derives the rows. `TONO_CLASES`/`TONO_FONDO` translate a token into a utility class.
+  - `hooks/` — `use-sse.ts` (payload + 5s reconnect), `use-reloj.ts` (clock `es-VE`).
+  - Setup files: `components.json`, `postcss.config.mjs`, `lib/utils.ts` (`cn` from the `cn` package). Icons are `lucide-react`.
 - `app/api/metrics/route.ts` — legacy JSON endpoint (returns 503 until the first fetch succeeds, same contract as before).
 - `public/` — only `cabecera_dashboard.png` (the old `public/index.html` was replaced by the React app).
+- Imports: `@/*` maps to the repo root (tsconfig `paths`); app/lib code uses `@/lib/...`, `@/types/...`, while `scripts/*.ts` use relative imports.
 
 ## Deployment
 

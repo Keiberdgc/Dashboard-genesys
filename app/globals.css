@@ -1,439 +1,158 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box
-}
-
-body {
-    background: #0d1117;
-    color: #e6edf3;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 14px;
-    min-height: 100vh
-}
-
-.wrap {
-    padding: 12px 16px
-}
-
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #21262d
-}
-
-header h1 {
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: .5px
-}
-
-.reloj {
-    font-size: 16px;
-    font-weight: 700;
-    color: #58a6ff
-}
-
-.act {
-    font-size: 11px;
-    color: #484f58;
-    margin-top: 2px;
-    text-align: right
-}
-
-.top-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 10px
-}
-
-.card {
-    background: #161b22;
-    border: 1px solid #21262d;
-    border-radius: 10px;
-    padding: 12px 14px
-}
-
-.card-label {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 1.2px;
-    color: #6e7681;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px
-}
-
-.dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    display: inline-block;
-    flex-shrink: 0
-}
-
-.dot-voz {
-    background: #3fb950
-}
-
-.dot-msg {
-    background: #a371f7
-}
-
-.dot-gold {
-    background: #d29922
-}
-
-.stat-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 5px
-}
-
-.stat-box {
-    background: #0d1117;
-    border-radius: 7px;
-    padding: 8px 5px;
-    text-align: center;
-    border: 1px solid #21262d
-}
-
-.stat-num {
-    font-size: 24px;
-    font-weight: 700;
-    line-height: 1
-}
-
-.red {
-    color: #f85149
-}
-
-.green {
-    color: #3fb950
-}
-
-.blue {
-    color: #58a6ff
-}
-
-.purple {
-    color: #a371f7
-}
-
-.stat-lbl {
-    font-size: 9px;
-    color: #6e7681;
-    margin-top: 3px;
-    line-height: 1.2
-}
-
-.totales-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-    margin-top: 8px;
-    border-top: 1px solid #21262d;
-    padding-top: 8px
-}
-
-.tot-full {
-    grid-column: 1/-1
-}
-
-.tot-box {
-    background: #0d1117;
-    border-radius: 7px;
-    padding: 6px 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    border: 1px solid #21262d
-}
-
-.tot-lbl {
-    font-size: 9px;
-    color: #6e7681
-}
-
-.tot-val {
-    font-size: 16px;
-    font-weight: 700
-}
-
-.dest-grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px
-}
-
-.dest-card {
-    background: #0d1117;
-    border-radius: 8px;
-    padding: 10px;
-    border: 1px solid #21262d;
-    position: relative;
-    overflow: hidden
-}
-
-.dest-icon {
-    position: absolute;
-    right: 8px;
-    top: 6px;
-    font-size: 18px;
-    opacity: .25
-}
-
-.dest-tipo {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #6e7681;
-    margin-bottom: 3px
-}
-
-.dest-nombre {
-    font-size: 12px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis
-}
-
-.dest-nombre.gold {
-    color: #d29922
-}
-
-.dest-nombre.purple {
-    color: #a371f7
-}
-
-.dest-stats {
-    display: flex;
-    gap: 4px
-}
-
-.dest-stat {
-    flex: 1;
-    text-align: center;
-    background: #161b22;
-    border-radius: 5px;
-    padding: 4px 2px;
-    border: 1px solid #21262d
-}
-
-.dest-stat-val {
-    font-size: 12px;
-    font-weight: 700;
-    color: #e6edf3
-}
-
-.dest-stat-lbl {
-    font-size: 8px;
-    color: #6e7681;
-    margin-top: 1px;
-    text-transform: uppercase
-}
-
-.tabs {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 8px;
-    flex-wrap: wrap
-}
-
-.tab-btn {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all .15s;
-    white-space: nowrap;
-    letter-spacing: .3px;
-    border: 1.5px solid transparent
-}
-
-.tab-todos-hoy {
-    background: #0f2318;
-    color: #56d364;
-    border-color: #1a4a2a
-}
-
-.tab-voz-hoy {
-    background: #0e1e3a;
-    color: #79c0ff;
-    border-color: #1a3a70
-}
-
-.tab-msg-hoy {
-    background: #1e0d35;
-    color: #c792f0;
-    border-color: #4a1a80
-}
-
-.tab-todos-sem {
-    background: #1a1130;
-    color: #d2a8ff;
-    border-color: #3d2580
-}
-
-.tab-voz-sem {
-    background: #0a1f2a;
-    color: #39d3f0;
-    border-color: #1a5060
-}
-
-.tab-msg-sem {
-    background: #2a0d35;
-    color: #f0a8ff;
-    border-color: #6a2090
-}
-
-.tab-btn.active {
-    filter: brightness(1.6);
-    box-shadow: 0 0 0 2px currentColor;
-    transform: translateY(-1px)
-}
-
-.tabla-wrap {
-    background: #161b22;
-    border-radius: 10px;
-    border: 1px solid #21262d;
-    overflow: hidden
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px
-}
-
-thead tr {
-    background: #0d1117
-}
-
-th {
-    padding: 8px 10px;
-    text-align: left;
-    color: #6e7681;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-    font-weight: 600
-}
-
-td {
-    padding: 8px 10px;
-    border-bottom: 1px solid #0d1117;
-    color: #c9d1d9
-}
-
-tbody tr:last-child td {
-    border-bottom: none
-}
-
-tbody tr:hover {
-    background: #1c2128
-}
-
-.rank {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 11px;
-    margin-right: 4px
-}
-
-.r1 {
-    background: #d29922;
-    color: #0d1117
-}
-
-.r2 {
-    background: #8b949e;
-    color: #0d1117
-}
-
-.r3 {
-    background: #7d4e1e;
-    color: #fff
-}
-
-.rn {
-    background: #21262d;
-    color: #8b949e
-}
-
-.pill {
-    display: inline-block;
-    padding: 2px 9px;
-    border-radius: 10px;
-    font-size: 11px;
-    font-weight: 700
-}
-
-.pv {
-    background: #12261a;
-    color: #3fb950;
-    border: 1px solid #1a3d28
-}
-
-.pm {
-    background: #1e1535;
-    color: #a371f7;
-    border: 1px solid #2d1f55
-}
-
-.pr {
-    background: #2d1010;
-    color: #f85149;
-    border: 1px solid #5a1e1e
-}
-
-.num-t {
-    font-size: 14px;
-    font-weight: 700;
-    color: #e6edf3
-}
-
-#loading {
-    position: fixed;
-    inset: 0;
-    background: #0d1117;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    gap: 14px
-}
-
-.spinner {
-    width: 36px;
-    height: 36px;
-    border: 3px solid #21262d;
-    border-top-color: #58a6ff;
-    border-radius: 50%;
-    animation: spin .8s linear infinite
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg)
+@import 'tailwindcss';
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--font-sans);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+
+    /* ── Colores de canal (identidad del dashboard) ────────────
+       Se exponen como utilidades: text-voz, bg-msg/15, border-oro/40… */
+    --color-voz: var(--voz);
+    --color-msg: var(--msg);
+    --color-cielo: var(--cielo);
+    --color-oro: var(--oro);
+    --color-peligro: var(--peligro);
+
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+
+    /* Colores de canal en tema claro (mismos tonos, algo más oscuros
+       para mantener el contraste sobre fondos claros) */
+    --voz: #1f7f38;
+    --msg: #7141c9;
+    --cielo: #1f6feb;
+    --oro: #9a6700;
+    --peligro: #cf222e;
+}
+
+/* El dashboard es siempre oscuro: la clase "dark" vive fija en <html>
+   (sin next-themes), así que esta es la paleta que se ve en pantalla.
+   Hereda la paleta GitHub oscura del dashboard original. */
+.dark {
+    --background: #0d1117;
+    --foreground: #e6edf3;
+    --card: #161b22;
+    --card-foreground: #e6edf3;
+    --popover: #161b22;
+    --popover-foreground: #e6edf3;
+    --primary: #58a6ff;
+    --primary-foreground: #0d1117;
+    --secondary: #21262d;
+    --secondary-foreground: #e6edf3;
+    --muted: #1c2128;
+    --muted-foreground: #8b949e;
+    --accent: #1c2128;
+    --accent-foreground: #e6edf3;
+    --destructive: #f85149;
+    --border: #21262d;
+    --input: #30363d;
+    --ring: #58a6ff;
+    --chart-1: #3fb950;
+    --chart-2: #a371f7;
+    --chart-3: #58a6ff;
+    --chart-4: #d29922;
+    --chart-5: #39d3f0;
+    --sidebar: #161b22;
+    --sidebar-foreground: #e6edf3;
+    --sidebar-primary: #58a6ff;
+    --sidebar-primary-foreground: #0d1117;
+    --sidebar-accent: #1c2128;
+    --sidebar-accent-foreground: #e6edf3;
+    --sidebar-border: #21262d;
+    --sidebar-ring: #58a6ff;
+
+    /* ── Colores de canal (identidad del dashboard) ────────────
+       voz = verde, msg = morado, cielo = azul, oro = destacados,
+       peligro = rojo (coincide con --destructive) */
+    --voz: #3fb950;
+    --msg: #a371f7;
+    --cielo: #58a6ff;
+    --oro: #d29922;
+    --peligro: #f85149;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
     }
-}
-
-#loading p {
-    color: #484f58;
-    font-size: 13px
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
 }
