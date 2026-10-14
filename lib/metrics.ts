@@ -20,6 +20,37 @@ const QUEUES = {
 };
 const TZ_OFFSET_HOURS = -4;
 
+// Filtro compartido por todas las consultas: las dos colas (voz + msg).
+// Antes estaba copiado (predicates idénticos) en cada función de consulta.
+const FILTRO_COLAS = {
+    type: 'or' as const,
+    predicates: [
+        { dimension: 'queueId', value: QUEUES.voz },
+        { dimension: 'queueId', value: QUEUES.msg }
+    ]
+};
+
+// 'voz' si el grupo pertenece a la cola de voz, 'msg' en cualquier otro caso
+function canalDe(queueId: string | undefined): 'voz' | 'msg' {
+    return queueId === QUEUES.voz ? 'voz' : 'msg';
+}
+
+// ── HELPERS HTTP — Authorization/Content-Type en un solo lugar ──
+async function genesysPost<T>(path: string, token: string, body: unknown): Promise<T> {
+    const r = await axios.post<T>(`${BASE_URL}${path}`, body, {
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    });
+    return r.data;
+}
+
+async function genesysGet<T>(path: string, token: string, params?: Record<string, string | number>): Promise<T> {
+    const r = await axios.get<T>(`${BASE_URL}${path}`, {
+        params,
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return r.data;
+}
+
 function getIntervalHoy(): string {
     const now = new Date();
     const midnight = new Date(now);
@@ -45,19 +76,11 @@ async function getRealtimeObservations(token: string): Promise<GenesysResponse> 
     const body = {
         filter: {
             type: 'and',
-            clauses: [{
-                type: 'or',
-                predicates: [
-                    { dimension: 'queueId', value: QUEUES.voz },
-                    { dimension: 'queueId', value: QUEUES.msg }
-                ]
-            }]
+            clauses: [{ type: 'or', predicates: FILTRO_COLAS.predicates }]
         },
         metrics: ['oWaiting', 'oInteracting', 'oOnQueueUsers']
     };
-    const r = await axios.post<GenesysResponse>(`${BASE_URL}/analytics/queues/observations/query`, body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
-    return r.data;
+    return genesysPost<GenesysResponse>('/analytics/queues/observations/query', token, body);
 }
 
 // Función para obtener totales de la cola (ofrecidas y abandonadas)
@@ -65,18 +88,10 @@ async function getQueueTotals(token: string, interval: string): Promise<GenesysR
     const body = {
         interval,
         groupBy: ['queueId', 'mediaType'],
-        filter: {
-            type: 'or',
-            predicates: [
-                { dimension: 'queueId', value: QUEUES.voz },
-                { dimension: 'queueId', value: QUEUES.msg }
-            ]
-        },
+        filter: FILTRO_COLAS,
         metrics: ['nOffered', 'tAbandon']
     };
-    const r = await axios.post<GenesysResponse>(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
-    return r.data;
+    return genesysPost<GenesysResponse>('/analytics/conversations/aggregates/query', token, body);
 }
 
 // AGREGADOS POR AGENTE — tAnswered/tHandle/tAbandon en una sola consulta.
@@ -88,20 +103,12 @@ async function getAgentAggregates(token: string, interval: string): Promise<Gene
     const body = {
         interval,
         groupBy: ['userId', 'queueId', 'mediaType'],
-        filter: {
-            type: 'or',
-            predicates: [
-                { dimension: 'queueId', value: QUEUES.voz },
-                { dimension: 'queueId', value: QUEUES.msg }
-            ]
-        },
+        filter: FILTRO_COLAS,
         // Aquí pedimos TODO lo necesario en una sola consulta
         // (tTalk/tAcw se pedían y no se usaban en ningún lado → fuera)
         metrics: ['tAnswered', 'tHandle', 'tAbandon']
     };
-    const r = await axios.post<GenesysResponse>(`${BASE_URL}/analytics/conversations/aggregates/query`, body,
-        { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' } });
-    return r.data;
+    return genesysPost<GenesysResponse>('/analytics/conversations/aggregates/query', token, body);
 }
 
 // ── CACHÉ DE NOMBRES DE AGENTES ──────────────────────────────
@@ -120,8 +127,8 @@ const globalNombres = globalThis as unknown as { __nombresAgentes?: CacheNombres
 const cacheNombres: CacheNombres = (globalNombres.__nombresAgentes ??= { nombres: new Map() });
 
 // NOMBRES DE AGENTES — caché + batch (fallback al GET individual de siempre)
-async function getAgentNames(token: string, userIds: (string | undefined)[]): Promise<Record<string, string>> {
-    const ids = [...new Set(userIds)].filter(Boolean) as string[];
+async function getAgentNames(token: string, userIds: string[]): Promise<Record<string, string>> {
+    const ids = [...new Set(userIds)];
     if (!ids.length) return {};
 
     const ahora = Date.now();
@@ -139,31 +146,31 @@ async function getAgentNames(token: string, userIds: (string | undefined)[]): Pr
         cacheNombres.nombres.set(id, { nombre, ts: Date.now() });
     };
 
-    // 1) Lote: GET /users?ids=a,b,c&fields=id,name (un puñado de ids por llamada)
+    // 1) Lote: GET /users?ids=a,b,c&fields=id,name (un puñado de ids por
+    //    llamada, TODOS los lotes en paralelo — antes eran en serie)
     const sinResolver = new Set(faltan);
-    for (let i = 0; i < faltan.length; i += TAM_LOTE_IDS) {
-        const lote = faltan.slice(i, i + TAM_LOTE_IDS);
+    const lotes: string[][] = [];
+    for (let i = 0; i < faltan.length; i += TAM_LOTE_IDS) lotes.push(faltan.slice(i, i + TAM_LOTE_IDS));
+    await Promise.all(lotes.map(async lote => {
         try {
-            const r = await axios.get<{ entities?: { id?: string; name?: string }[] }>(`${BASE_URL}/users`, {
-                params: { ids: lote.join(','), fields: 'id,name', pageSize: lote.length },
-                headers: { 'Authorization': `Bearer ${token}` }
+            const r = await genesysGet<{ entities?: { id?: string; name?: string }[] }>('/users', token, {
+                ids: lote.join(','), fields: 'id,name', pageSize: lote.length
             });
-            for (const u of r.data.entities || []) {
+            for (const u of r.entities || []) {
                 if (u.id && u.name) {
                     guardar(u.id, u.name);
                     sinResolver.delete(u.id);
                 }
             }
         } catch { /* sigue el fallback individual de abajo */ }
-    }
+    }));
 
     // 2) Fallback: los que el lote no devolvió → GET individual (sin caché
     //    del nombre de fallback, para reintentar en el próximo ciclo)
     await Promise.all([...sinResolver].map(async id => {
         try {
-            const r = await axios.get<{ name: string }>(`${BASE_URL}/users/${id}?fields=id,name`,
-                { headers: { 'Authorization': `Bearer ${token}` } });
-            guardar(id, r.data.name);
+            const r = await genesysGet<{ name: string }>(`/users/${id}`, token, { fields: 'id,name' });
+            guardar(id, r.name);
         } catch { map[id] = `Agente (${id.substring(0, 8)}...)`; }
     }));
     return map;
@@ -176,12 +183,14 @@ function processRealtime(data: GenesysResponse): MetricasBrutas['tiempoReal'] {
         msg: { oWaiting: 0, oInteracting: 0, oOnQueueUsers: 0 }
     };
     data.results?.forEach(result => {
-        const canal = result.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
+        const canal = canalDe(result.group?.queueId);
         result.data?.forEach(m => {
             const val = m.stats?.count || 0;
-            if (m.metric === 'oWaiting') info[canal].oWaiting += val;
-            if (m.metric === 'oInteracting') info[canal].oInteracting += val;
-            if (m.metric === 'oOnQueueUsers') info[canal].oOnQueueUsers += val;
+            switch (m.metric) {
+                case 'oWaiting': info[canal].oWaiting += val; break;
+                case 'oInteracting': info[canal].oInteracting += val; break;
+                case 'oOnQueueUsers': info[canal].oOnQueueUsers += val; break;
+            }
         });
     });
     return info;
@@ -194,12 +203,19 @@ function processQueueTotals(data: GenesysResponse): Totales {
         msg: { ofrecidas: 0 }
     };
     data.results?.forEach(r => {
-        const canal = r.group?.queueId === QUEUES.voz ? 'voz' : 'msg';
+        const canal = canalDe(r.group?.queueId);
         r.data?.forEach(d => {
             d.metrics?.forEach(m => {
-                if (m.metric === 'nOffered' && canal === 'voz') result.voz.ofrecidas += m.stats?.count || 0;
-                if (m.metric === 'nOffered' && canal === 'msg') result.msg.ofrecidas += m.stats?.count || 0;
-                if (m.metric === 'tAbandon' && canal === 'voz') result.voz.perdidas += m.stats?.count || 0;
+                const val = m.stats?.count || 0;
+                switch (m.metric) {
+                    case 'nOffered':
+                        if (canal === 'voz') result.voz.ofrecidas += val;
+                        else result.msg.ofrecidas += val;
+                        break;
+                    case 'tAbandon':
+                        if (canal === 'voz') result.voz.perdidas += val;
+                        break;
+                }
             });
         });
     });
@@ -237,27 +253,30 @@ function processAgentAggregates(
             };
         }
 
-        const canal = queueId === QUEUES.voz ? 'voz' : 'msg';
+        const canal = canalDe(queueId);
+        const ag = map[userId];
 
         result.data?.forEach(d => {
             d.metrics?.forEach(m => {
-                if (m.metric === 'tAnswered') {
-                    map[userId][canal].manejadas += m.stats?.count || 0;
-                }
-                // Capturamos tanto la suma como el conteo de tHandle
-                if (m.metric === 'tHandle') {
-                    map[userId][canal].tHandle_sum += m.stats?.sum || 0;
-                    map[userId][canal].tHandle_count += m.stats?.count || 0;
-                }
-                // Pérdidas fusionadas: solo la cola de voz (antes: consulta
-                // aparte filtrada por voz + inbound)
-                if (m.metric === 'tAbandon' && canal === 'voz') {
-                    map[userId].voz.perdidas += m.stats?.count || 0;
+                switch (m.metric) {
+                    case 'tAnswered':
+                        ag[canal].manejadas += m.stats?.count || 0;
+                        break;
+                    // Capturamos tanto la suma como el conteo de tHandle
+                    case 'tHandle':
+                        ag[canal].tHandle_sum += m.stats?.sum || 0;
+                        ag[canal].tHandle_count += m.stats?.count || 0;
+                        break;
+                    // Pérdidas fusionadas: solo la cola de voz (antes: consulta
+                    // aparte filtrada por voz + inbound)
+                    case 'tAbandon':
+                        if (canal === 'voz') ag.voz.perdidas += m.stats?.count || 0;
+                        break;
                 }
             });
         });
 
-        map[userId].total = map[userId].voz.manejadas + map[userId].msg.manejadas;
+        ag.total = ag.voz.manejadas + ag.msg.manejadas;
     });
 
     return Object.values(map);
@@ -303,9 +322,18 @@ export async function getPartePeriodo(periodo: 'hoy' | 'semana'): Promise<ParteP
         getAgentAggregates(token, interval)
     ]);
 
-    const uids = ag.results?.map(r => r.group?.userId).filter(Boolean) || [];
+    const uids = (ag.results ?? [])
+        .map(r => r.group?.userId)
+        .filter((id): id is string => Boolean(id));
     const names = await getAgentNames(token, uids);
     const lista = processAgentAggregates(ag, names);
+
+    // Cada agente se formatea UNA sola vez y el resultado se reutiliza en
+    // todos los rankings (antes: ~2N llamadas a formatearAgente por ciclo)
+    const formateados = new Map<AgenteInterno, ReturnType<typeof formatearAgente>>(
+        lista.map(a => [a, formatearAgente(a)])
+    );
+    const fmt = (a: AgenteInterno) => formateados.get(a) ?? formatearAgente(a);
 
     const porTotal = (a: AgenteInterno[]) => [...a].sort((x, y) => y.total - x.total);
     const porVoz = (a: AgenteInterno[]) => [...a].sort((x, y) => y.voz.manejadas - x.voz.manejadas);
@@ -314,11 +342,11 @@ export async function getPartePeriodo(periodo: 'hoy' | 'semana'): Promise<ParteP
     const listaT = porTotal(lista), listaV = porVoz(lista), listaM = porMsg(lista);
 
     const armarRanking = (todos: AgenteInterno[], voz: AgenteInterno[], msg: AgenteInterno[]): RankingAgents => ({
-        todos: todos.map(formatearAgente),
-        top5Voz: voz.slice(0, 5).map(formatearAgente),
-        top5Msg: msg.slice(0, 5).map(formatearAgente),
-        destacadoVoz: voz[0] ? formatearAgente(voz[0]) : null,
-        destacadoMsg: msg[0] ? formatearAgente(msg[0]) : null
+        todos: todos.map(fmt),
+        top5Voz: voz.slice(0, 5).map(fmt),
+        top5Msg: msg.slice(0, 5).map(fmt),
+        destacadoVoz: voz[0] ? fmt(voz[0]) : null,
+        destacadoMsg: msg[0] ? fmt(msg[0]) : null
     });
 
     return {
