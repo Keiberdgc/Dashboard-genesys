@@ -1,6 +1,6 @@
 import { Spinner } from '@/components/ui/spinner';
 
-// Pantalla de conexión (solo hasta el primer payload por SSE).
+// Pantalla de conexión (solo hasta el primer payload del sondeo).
 
 export function LoadingScreen() {
     return (

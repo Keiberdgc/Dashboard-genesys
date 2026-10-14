@@ -59,7 +59,7 @@ export interface MetricasBrutas {
     semana: RankingAgents;
 }
 
-/** Payload final que viaja por SSE y por /api/metrics
+/** Payload final que sirve /api/metrics a la UI (por sondeo)
  *  (tiempoReal renombrado a enEspera/enAtencion/enCola en buildPayload) */
 export interface DashboardPayload {
     ok: boolean;

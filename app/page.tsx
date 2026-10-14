@@ -1,8 +1,8 @@
 'use client';
 
 // Dashboard Soporte — port del public/index.html original a React.
-// Esta página solo orquesta: datos por SSE, reloj y vista activa;
-// el render vive en components/dashboard/* y el tema en globals.css.
+// Esta página solo orquesta: datos (sondeo de /api/metrics), reloj y vista
+// activa; el render vive en components/dashboard/* y el tema en globals.css.
 import { useState } from 'react';
 import { DashboardHeader } from '@/components/dashboard/dashboard-header';
 import { DestacadosCard } from '@/components/dashboard/destacados-card';
@@ -11,7 +11,7 @@ import { RankingTable } from '@/components/dashboard/ranking-table';
 import { RealtimeCard } from '@/components/dashboard/realtime-card';
 import { TabsNav } from '@/components/dashboard/tabs-nav';
 import { listaTab, TAB_POR_ID, type Tab } from '@/config/tabs';
-import { useMetricas } from '@/hooks/use-sse';
+import { useMetricas } from '@/hooks/use-metricas';
 import { useReloj } from '@/hooks/use-reloj';
 
 export default function Dashboard() {
