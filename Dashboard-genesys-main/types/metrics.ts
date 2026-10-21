@@ -23,7 +23,7 @@ export interface Totales {
     msg: { ofrecidas: number };
 }
 
-/** Agente ya formateado (ms convertidos a "Xm Ys") */
+/*Agente ya formateado (ms convertidos a "Xm Ys") */
 export interface Agente {
     nombre: string;
     total: number;
