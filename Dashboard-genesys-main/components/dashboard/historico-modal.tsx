@@ -5,12 +5,13 @@
 // en tiempo real — es una capa paralela e independiente.
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { CalendarIcon, XIcon, SearchIcon, PhoneIcon, MessageSquareIcon, LayersIcon } from 'lucide-react';
+import { CalendarIcon, XIcon, SearchIcon, PhoneIcon, MessageSquareIcon, LayersIcon, PhoneOffIcon, TimerIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Spinner } from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { EXCLUIR_TMANEJO_CHAT } from '@/config/tabs';
 import type { Agente, RankingAgents, Totales } from '@/types/metrics';
 
 // ── TIPOS ─────────────────────────────────────────────────
@@ -22,7 +23,7 @@ interface ResultadoHistorico {
     ranking?: RankingAgents;
 }
 
-type TabHistorico = 'todos' | 'top5Voz' | 'top5Msg';
+type TabHistorico = 'todos' | 'top5Voz' | 'top5Msg' | 'perdidas' | 'tManejoVoz' | 'tManejoChat';
 
 // ── PRESETS ───────────────────────────────────────────────
 // Todos los cálculos en hora Venezuela (UTC-4, sin horario de verano).
@@ -142,10 +143,27 @@ const TONOS_RANK = ['oro', 'plata', 'bronce'] as const;
 
 type Canal = 'todos' | 'voz' | 'msg';
 
-function TablaRanking({ filas, canal }: { filas: Agente[]; canal: Canal }) {
-    const destacado = (a: Agente) =>
-        canal === 'voz' ? a.vozManejadas : canal === 'msg' ? a.msgManejadas : a.total;
-    const rankLabel = canal === 'voz' ? 'Llamadas (rank)' : canal === 'msg' ? 'Mensajes (rank)' : 'Total';
+// Convierte "Xm Ys" a segundos para ordenar tiempos
+function tiempoASegundos(t: string): number {
+    if (!t || t === '0m 0s') return 0;
+    const m = t.match(/(\d+)m\s*(\d+)s/);
+    if (!m) return 0;
+    return parseInt(m[1]) * 60 + parseInt(m[2]);
+}
+
+function TablaRanking({ filas, canal, orden }: { filas: Agente[]; canal: Canal; orden?: TabHistorico }) {
+    const destacado = (a: Agente) => {
+        if (orden === 'perdidas') return a.vozPerdidas ?? 0;
+        if (orden === 'tManejoVoz') return a.tManejoVoz;
+        if (orden === 'tManejoChat') return a.tManejoMsg;
+        return canal === 'voz' ? a.vozManejadas : canal === 'msg' ? a.msgManejadas : a.total;
+    };
+    const rankLabel = orden === 'perdidas' ? 'Perdidas (rank)'
+        : orden === 'tManejoVoz' ? 'T. Manejo Voz (rank)'
+        : orden === 'tManejoChat' ? 'T. Manejo Chat (rank)'
+        : canal === 'voz' ? 'Llamadas (rank)'
+        : canal === 'msg' ? 'Mensajes (rank)'
+        : 'Total';
 
     if (!filas.length) {
         return (
@@ -178,7 +196,7 @@ function TablaRanking({ filas, canal }: { filas: Agente[]; canal: Canal }) {
                             </Badge>
                         </TableCell>
                         <TableCell className="font-semibold">{a.nombre}</TableCell>
-                        <TableCell className="text-sm font-bold tabular-nums">{destacado(a)}</TableCell>
+                        <TableCell className="text-sm font-bold tabular-nums">{String(destacado(a))}</TableCell>
                         <TableCell><Badge tono="voz">{a.vozManejadas}</Badge></TableCell>
                         <TableCell><Badge tono="msg">{a.msgManejadas}</Badge></TableCell>
                         <TableCell><Badge tono="peligro">{a.vozPerdidas}</Badge></TableCell>
@@ -289,15 +307,26 @@ export function HistoricoModal({ abierto, onCerrar }: HistoricoModalProps) {
 
     const filaActiva = (): Agente[] => {
         if (!resultado?.ranking) return [];
-        return tabActiva === 'top5Voz'
-            ? resultado.ranking.top5Voz
-            : tabActiva === 'top5Msg'
-                ? resultado.ranking.top5Msg
-                : resultado.ranking.todos;
+        const todos = resultado.ranking.todos;
+        switch (tabActiva) {
+            case 'top5Voz': return resultado.ranking.top5Voz;
+            case 'top5Msg': return resultado.ranking.top5Msg;
+            case 'perdidas':
+                return [...todos].sort((a, b) => (b.vozPerdidas ?? 0) - (a.vozPerdidas ?? 0)).slice(0, 5);
+            case 'tManejoVoz':
+                return [...todos].filter(a => a.vozManejadas > 0)
+                    .sort((a, b) => tiempoASegundos(b.tManejoVoz) - tiempoASegundos(a.tManejoVoz)).slice(0, 5);
+            case 'tManejoChat':
+                return [...todos].filter(a => a.msgManejadas > 0 && !EXCLUIR_TMANEJO_CHAT.includes(a.nombre))
+                    .sort((a, b) => tiempoASegundos(b.tManejoMsg) - tiempoASegundos(a.tManejoMsg)).slice(0, 5);
+            default: return todos;
+        }
     };
 
     const canalActivo = (): Canal =>
-        tabActiva === 'top5Voz' ? 'voz' : tabActiva === 'top5Msg' ? 'msg' : 'todos';
+        tabActiva === 'top5Voz' || tabActiva === 'perdidas' || tabActiva === 'tManejoVoz' ? 'voz'
+        : tabActiva === 'top5Msg' || tabActiva === 'tManejoChat' ? 'msg'
+        : 'todos';
 
     if (!abierto) return null;
 
@@ -427,12 +456,15 @@ export function HistoricoModal({ abierto, onCerrar }: HistoricoModalProps) {
                                 <CardHeader className="border-b border-border px-4 py-3">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-sm">Ranking de agentes</CardTitle>
-                                        <div className="flex gap-1">
+                                        <div className="flex flex-wrap gap-1">
                                             {(
                                                 [
                                                     { id: 'todos', label: 'Todos', icon: LayersIcon, tono: 'cielo' },
                                                     { id: 'top5Voz', label: 'Top 5 Llamadas', icon: PhoneIcon, tono: 'voz' },
-                                                    { id: 'top5Msg', label: 'Top 5 Mensajes', icon: MessageSquareIcon, tono: 'msg' }
+                                                    { id: 'top5Msg', label: 'Top 5 Mensajes', icon: MessageSquareIcon, tono: 'msg' },
+                                                    { id: 'perdidas', label: 'Más Perdidas', icon: PhoneOffIcon, tono: 'peligro' },
+                                                    { id: 'tManejoVoz', label: 'T. Manejo Voz', icon: TimerIcon, tono: 'voz' },
+                                                    { id: 'tManejoChat', label: 'T. Manejo Chat', icon: TimerIcon, tono: 'msg' },
                                                 ] as const
                                             ).map(({ id, label, icon: Icon, tono }) => (
                                                 <button
@@ -441,7 +473,13 @@ export function HistoricoModal({ abierto, onCerrar }: HistoricoModalProps) {
                                                     className={cn(
                                                         'flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                                                         tabActiva === id
-                                                            ? `border-${tono}/40 bg-${tono}/10 text-${tono}`
+                                                            ? tono === 'peligro'
+                                                                ? 'border-peligro/40 bg-peligro/10 text-peligro'
+                                                                : tono === 'voz'
+                                                                    ? 'border-voz/40 bg-voz/10 text-voz'
+                                                                    : tono === 'msg'
+                                                                        ? 'border-msg/40 bg-msg/10 text-msg'
+                                                                        : 'border-cielo/40 bg-cielo/10 text-cielo'
                                                             : 'border-border bg-background text-muted-foreground hover:text-foreground'
                                                     )}
                                                 >
@@ -453,7 +491,7 @@ export function HistoricoModal({ abierto, onCerrar }: HistoricoModalProps) {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-0 overflow-x-auto">
-                                    <TablaRanking filas={filaActiva()} canal={canalActivo()} />
+                                    <TablaRanking filas={filaActiva()} canal={canalActivo()} orden={tabActiva} />
                                 </CardContent>
                             </Card>
                         </div>
